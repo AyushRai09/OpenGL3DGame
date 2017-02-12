@@ -2,6 +2,7 @@
 #include <cmath>
 #include <fstream>
 #include <vector>
+#include<map>
 
 #include <GL/glew.h>
 #include <GL/gl.h>
@@ -32,12 +33,22 @@ struct GLMatrices {
 	GLuint MatrixID;
 } Matrices;
 
-int do_rot, floor_rel;
-int key_press=0, rot_var=0;
+struct Sprite {
+    string name;
+    float x1, y1, z1, x2, y2, z2, x3, y3, z3, x4, y4, z4, x5, y5, z5, x6, y6, z6, x7, y7, z7, x8, y8, z8;
+		string orientation;
+		glm::mat4 mvp,model,mvpf;
+};
+map <string, Sprite> cubeObjects;
+int do_rot, floor_rel,turn_left=0,turn_right=0, turn_forward=0, turn_backward=0;
+int key_press=0, rot_varLeft=0, rot_varRight=0, rot_varForward=0, rot_varBackward=0;
+int XYplaneAngle=0, YZplaneAngle=0, reached_flag=0,main_flag=0;
+float totalAngleRotatedX=0,totalAngleRotatedY=0, totalAngleRotatedZ=0;
 GLuint programID;
 double last_update_time, current_time;
 glm::vec3 rect_pos, floor_pos;
 float rectangle_rotation = 0;
+VAO *tiles,*tilesLines;
 
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
@@ -274,8 +285,16 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			break;
 		case 'a':
 			turn_left=1;
+			break;
 		case 'd':
 			turn_right=1;
+			break;
+		case 'w':
+			turn_forward=1;
+			break;
+		case 's':
+			turn_backward=1;
+			break;
 		default:
 			break;
 	}
@@ -300,22 +319,37 @@ void mouseButton (GLFWwindow* window, int button, int action, int mods)
 /* Modify the bounds of the screen here in glm::ortho or Field of View in glm::Perspective */
 void reshapeWindow (GLFWwindow* window, int width, int height)
 {
-	int fbwidth=600, fbheight=600;
+	int fbwidth=width, fbheight=height;
 	glfwGetFramebufferSize(window, &fbwidth, &fbheight);
 	//	glViewport((int)(x*fbwidth), (int)(y*fbheight), (int)(w*fbwidth), (int)(h*fbheight));
 
-	GLfloat fov = M_PI/2;
+	GLfloat fov = (3*M_PI)/4.0f;
 
 	// sets the viewport of openGL renderer
 	glViewport (0, 0, (GLsizei) fbwidth, (GLsizei) fbheight);
 
 	// Store the projection matrix in a variable for future use
 	// Perspective projection for 3D views
-	Matrices.projection = glm::perspective(fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1f, 500.0f);
+	Matrices.projection = glm::perspective(fov, (GLfloat) fbwidth / (GLfloat) fbheight, 0.1f, 1000.0f);
 
 	// Ortho projection for 2D views
 	//	Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
+
+
+int arr[11][11]={{0,0,0,0,0, 0, 0,0,0,0,1},
+{0,0,0,0,0, 0, 0,0,0,0,0},
+{0,0,0,0,0, 0, 0,0,0,0,0},
+{0,0,0,0,0, 0, 0,0,0,0,0},
+{0,0,0,0,0, 0, 0,0,0,0,0},
+
+{0,0,0,0,0, 1, 0,0,0,0,0},
+
+{0,0,0,0,0, 0, 0,0,0,0,0},
+{0,0,0,0,0, 0, 0,0,0,0,0},
+{0,0,0,0,0, 0, 0,0,0,0,0},
+{0,0,0,0,0, 0, 0,0,0,0,0},
+{0,0,0,0,0, 0, 0,0,0,0,0}};
 
 VAO *rectangle, *cam, *floor_vao;
 
@@ -323,47 +357,47 @@ VAO *rectangle, *cam, *floor_vao;
 void createRectangle ()
 {
 	// GL3 accepts only Triangles. Quads are not supported
-	const GLfloat vertex_buffer_data [] = {
-		-0.5, 0.5, 0.5,
-		-0.5, -0.5, 0.5,
-		0.5, -0.5, 0.5,
-		-0.5, 0.5, 0.5,
-		0.5, -0.5, 0.5,
-		0.5, 0.5, 0.5,
-		0.5, 0.5, 0.5,
-		0.5, -0.5, 0.5,
-		0.5, -0.5, -0.5,
-		0.5, 0.5, 0.5,
-		0.5, -0.5, -0.5,
-		0.5, 0.5, -0.5,
-		0.5, 0.5, -0.5,
-		0.5, -0.5, -0.5,
-		-0.5, -0.5, -0.5,
-		0.5, 0.5, -0.5,
-		-0.5, -0.5, -0.5,
-		-0.5, 0.5, -0.5,
-		-0.5, 0.5, -0.5,
-		-0.5, -0.5, -0.5,
-		-0.5, -0.5, 0.5,
-		-0.5, 0.5, -0.5,
-		-0.5, -0.5, 0.5,
-		-0.5, 0.5, 0.5,
-		-0.5, 0.5, -0.5,
-		-0.5, 0.5, 0.5,
-		0.5, 0.5, 0.5,
-		-0.5, 0.5, -0.5,
-		0.5, 0.5, 0.5,
-		0.5, 0.5, -0.5,
-		-0.5, -0.5, 0.5,
-		-0.5, -0.5, -0.5,
-		0.5, -0.5, -0.5,
-		-0.5, -0.5, 0.5,
-		0.5, -0.5, -0.5,
-		0.5, -0.5, 0.5,
+	GLfloat vertex_buffer_data [] = {
+		-0.5, 0.5, 1.0f,
+		-0.5, -0.5,1.0f,
+		0.5, -0.5, 1.0f,
+		-0.5, 0.5, 1.0f,
+		0.5, -0.5, 1.0f,
+		0.5, 0.5, 1.0f,
+		0.5, 0.5, 1.0f,
+		0.5, -0.5, 1.0f,
+		0.5, -0.5, -1.0f,
+		0.5, 0.5, 1.0f,
+		0.5, -0.5, -1.0f,
+		0.5, 0.5, -1.0f,
+		0.5, 0.5, -1.0f,
+		0.5, -0.5, -1.0f,
+		-0.5, -0.5, -1.0f,
+		0.5, 0.5, -1.0f,
+		-0.5, -0.5, -1.0f,
+		-0.5, 0.5, -1.0f,
+		-0.5, 0.5, -1.0f,
+		-0.5, -0.5, -1.0f,
+		-0.5, -0.5, 1.0f,
+		-0.5, 0.5, -1.0f,
+		-0.5, -0.5, 1.0f,
+		-0.5, 0.5, 1.0f,
+		-0.5, 0.5, -1.0f,
+		-0.5, 0.5, 1.0f,
+		0.5, 0.5, 1.0f,
+		-0.5, 0.5, -1.0f,
+		0.5, 0.5, 1.0f,
+		0.5, 0.5, -1.0f,
+		-0.5, -0.5, 1.0f,
+		-0.5, -0.5, -1.0f,
+		0.5, -0.5, -1.0f,
+		-0.5, -0.5, 1.0f,
+		0.5, -0.5, -1.0f,
+		0.5, -0.5, 1.0f,
 
 	};
 
-	const GLfloat color_buffer_data [] = {
+	GLfloat color_buffer_data [] = {
 		0.583f,  0.771f,  0.014f,
 		0.609f,  0.115f,  0.436f,
 		0.327f,  0.483f,  0.844f,
@@ -423,31 +457,176 @@ void createCam ()
 	// create3DObject creates and returns a handle to a VAO that can be used later
 	cam = create3DObject(GL_TRIANGLES, 1*3, vertex_buffer_data, color_buffer_data, GL_LINE);
 }
-void createFloor ()
+void createTile()
 {
 	// GL3 accepts only Triangles. Quads are not supported
-	static const GLfloat vertex_buffer_data [] = {
-		-2, -1, 2,
-		2, -1, 2,
-		-2, -1, -2,
-		-2, -1, -2,
-		2, -1, 2,
-		2, -1, -2,
+	GLfloat vertex_buffer_data [] = {
+		-0.5, 0.25, 0.5,
+		-0.5, -0.25,0.5,
+		0.5, -0.25, 0.5,
+		-0.5, 0.25, 0.5,
+		0.5, -0.25, 0.5,
+		0.5, 0.25, 0.5,
+		0.5, 0.25, 0.5,
+		0.5, -0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, 0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, 0.25, -0.5,
+		0.5, 0.25, -0.5,
+		0.5, -0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		0.5, 0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, 0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, 0.25, 0.5,
+		0.5, 0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		0.5, 0.25, 0.5,
+		0.5, 0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, -0.25, -0.5,
+		0.5, -0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, -0.25, 0.5,
+
 	};
 
-	static const GLfloat color_buffer_data [] = {
-		0.65, 0.165, 0.165,
-		0.65, 0.165, 0.165,
-		0.65, 0.165, 0.165,
-		0.65, 0.165, 0.165,
-		0.65, 0.165, 0.165,
-		0.65, 0.165, 0.165,
+	GLfloat color_buffer_data [] = {
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+
 	};
 
 	// create3DObject creates and returns a handle to a VAO that can be used later
-	floor_vao = create3DObject(GL_TRIANGLES, 2*3, vertex_buffer_data, color_buffer_data, GL_FILL);
-}
+	tiles=create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_FILL);
 
+
+}
+void createTilesLines()
+{
+	GLfloat vertex_buffer_data [] = {
+		-0.5, 0.25, 0.5,
+		-0.5, -0.25,0.5,
+		0.5, -0.25, 0.5,
+		-0.5, 0.25, 0.5,
+		0.5, -0.25, 0.5,
+		0.5, 0.25, 0.5,
+		0.5, 0.25, 0.5,
+		0.5, -0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, 0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, 0.25, -0.5,
+		0.5, 0.25, -0.5,
+		0.5, -0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		0.5, 0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, 0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, 0.25, 0.5,
+		0.5, 0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		0.5, 0.25, 0.5,
+		0.5, 0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, -0.25, -0.5,
+		0.5, -0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, -0.25, 0.5,
+	};
+
+	GLfloat color_buffer_data [] = {
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+	};
+
+	tilesLines=create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_LINE);
+}
 float camera_rotation_angle = 90;
 
 /* Render the scene with openGL */
@@ -456,6 +635,7 @@ void draw (GLFWwindow* window)
 {
 
 
+	int i=0, j=0;
 	// use the loaded shader program
 	// Don't change unless you know what you are doing
 	glUseProgram(programID);
@@ -464,31 +644,342 @@ void draw (GLFWwindow* window)
 
 //	glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
 
-  glm::vec3 eye(2,2,2);
+  glm::vec3 eye(0,20,0);
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
 	glm::vec3 target (0, 0, 0);
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-	glm::vec3 up (0, 1,0);
+	glm::vec3 up (0,0,-1);
 
 	Matrices.view=glm::lookAt(eye,target,up);
 //	Matrices.view=glm::mat4(1.0f);
 	glm::mat4 VP=Matrices.projection*Matrices.view;
-	Matrices.model=glm::mat4(1.0f);
-
-
-	if(turn_left==1 && rot_var<=M_PI/2.0)
+	glm::mat4 scaleCube=glm::scale(glm::vec3(1,1,1));
+	glm::mat4 trans_mat,trans_tile;
+/*############################################################################################################*/
+//XYplaneAngle for turn_right and turn_left, YZplaneAngle for turn_forward and turn_backward.
+	if(turn_right==1)// && rot_varRight>=-90) //do this for the case when player presses the key 'd'
 	{
-	glm::mat4 translateRectangle=glm::translate(trans_var);
-	glm::mat4 rotateCube=glm::rotate((float)(rot_var*M_PI/180.0f),glm::vec3(0,0,1));
-	Matrices.model*=rotateCube;
-	glm::mat4 MVP=VP*Matrices.model;
-	glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE, &MVP[0][0]);
-	draw3DObject(rectangle);
-	rot_var=rot_var+1;
+
+		rot_varRight=1;
+/*	cubeObjects["cube"].model=glm::mat4(1.0f);
+	glm::mat4 rotateCube=glm::rotate((float)(XYplaneAngle*M_PI/180.0f),glm::vec3(0,0,1));
+	trans_mat=glm::translate(glm::vec3(-0.5,0.5,-1.0));
+
+	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x2,cubeObjects["cube"].y2,cubeObjects["cube"].z2));
+	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*trans_mat*scaleCube;
+	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
+	rot_varRight=rot_varRight-1;
+	XYplaneAngle=XYplaneAngle-1;
+	if(XYplaneAngle==180 || XYplaneAngle==-180)
+		XYplaneAngle=0; */
+	}
+	if(rot_varRight==1)//rot_varRight<-90
+			{
+				rot_varRight=0;
+				turn_right=0;
+
+				if(cubeObjects["cube"].orientation=="alongZ")
+				{
+				cubeObjects["cube"].orientation="alongZ";
+				cubeObjects["cube"].x1+=1; //update the new coordinates. Rotated along z, so only need to update the x-coordinates.
+				cubeObjects["cube"].x2+=1;
+				cubeObjects["cube"].x3+=1;
+				cubeObjects["cube"].x4+=1;
+				cubeObjects["cube"].x5+=1; //update the new coordinates. Rotated along z, so only need to update the x-coordinates.
+				cubeObjects["cube"].x6+=1;
+				cubeObjects["cube"].x7+=1;
+				cubeObjects["cube"].x8+=1;
+			  }
+
+				else if(cubeObjects["cube"].orientation=="alongY")
+				{
+					cubeObjects["cube"].orientation="alongX";
+					cubeObjects["cube"].y3+=-1.0;
+					cubeObjects["cube"].y4+=-1.0;
+					cubeObjects["cube"].y7+=-1.0;
+					cubeObjects["cube"].y8+=-1.0;
+					cubeObjects["cube"].x1+=1.0;
+					cubeObjects["cube"].x2+=2.0;
+					cubeObjects["cube"].x3+=2.0;
+					cubeObjects["cube"].x4+=1.0;
+					cubeObjects["cube"].x5+=1.0;
+					cubeObjects["cube"].x6+=2.0;
+					cubeObjects["cube"].x7+=2.0;
+					cubeObjects["cube"].x8+=1.0;
+				}
+
+				else if(cubeObjects["cube"].orientation=="alongX")
+				{
+					cubeObjects["cube"].orientation="alongY";
+					cubeObjects["cube"].x1+=2.0;
+					cubeObjects["cube"].x2+=1.0;
+					cubeObjects["cube"].x3+=1.0;
+					cubeObjects["cube"].x4+=2.0;
+					cubeObjects["cube"].x5+=2.0;
+					cubeObjects["cube"].x6+=1.0;
+					cubeObjects["cube"].x7+=1.0;
+					cubeObjects["cube"].x8+=2.0;
+					cubeObjects["cube"].y3+=1;
+					cubeObjects["cube"].y4+=1;
+					cubeObjects["cube"].y7+=1;
+					cubeObjects["cube"].y8+=1;
+				}
+			}
+/*###############################################################################################*/
+if(turn_left==1)// && rot_varLeft<=90) // when player presses 'a'
+{
+	rot_varLeft=1;
+/*	cubeObjects["cube"].model=glm::mat4(1.0f);
+	glm::mat4 rotateCube=glm::rotate((float)(XYplaneAngle*M_PI/180.0f),glm::vec3(0,0,1));
+	trans_mat=glm::translate(glm::vec3(0.5,0.5,-1.0));
+
+	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x1,cubeObjects["cube"].y1,cubeObjects["cube"].z1));
+	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*trans_mat*scaleCube;
+	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
+	rot_varLeft=rot_varLeft+1;
+	XYplaneAngle=XYplaneAngle+1;
+	if(XYplaneAngle==180 || XYplaneAngle==-180)
+		XYplaneAngle=0;
+	*/
+}
+if(rot_varLeft==1)//rot_varLeft>90)
+		{
+			rot_varLeft=0;
+			turn_left=0;
+			main_flag=1;
+
+			if(cubeObjects["cube"].orientation=="alongZ")
+			{
+			cubeObjects["cube"].orientation="alongZ";
+			cubeObjects["cube"].x1-=1; //update the new coordinates. Rotated along z, so only need to update the x-coordinates.
+			cubeObjects["cube"].x2-=1;
+			cubeObjects["cube"].x3-=1;
+			cubeObjects["cube"].x4-=1;
+			cubeObjects["cube"].x5-=1; //update the new coordinates. Rotated along z, so only need to update the x-coordinates.
+			cubeObjects["cube"].x6-=1;
+			cubeObjects["cube"].x7-=1;
+			cubeObjects["cube"].x8-=1;
+		 }
+		 else if(cubeObjects["cube"].orientation=="alongX")
+		 {
+			 cubeObjects["cube"].orientation="alongY";
+			 cubeObjects["cube"].x1+=-1;
+			 cubeObjects["cube"].x2+=-2;
+			 cubeObjects["cube"].x3+=-2;
+			 cubeObjects["cube"].x4+=-1;
+			 cubeObjects["cube"].x5+=-1;
+			 cubeObjects["cube"].x6+=-2;
+			 cubeObjects["cube"].x7+=-2;
+			 cubeObjects["cube"].x8+=-1;
+			 cubeObjects["cube"].y3+=1;
+			 cubeObjects["cube"].y4+=1;
+			 cubeObjects["cube"].y7+=1;
+			 cubeObjects["cube"].y8+=1;
+		 }
+		 else if(cubeObjects["cube"].orientation=="alongY")
+		 {
+			 cubeObjects["cube"].orientation="alongX";
+			 cubeObjects["cube"].x1+=-2;
+			 cubeObjects["cube"].x2+=-1;
+			 cubeObjects["cube"].x3+=-1;
+			 cubeObjects["cube"].x4+=-2;
+			 cubeObjects["cube"].x5+=-2;
+			 cubeObjects["cube"].x6+=-1;
+			 cubeObjects["cube"].x7+=-1;
+			 cubeObjects["cube"].x8+=-2;
+			 cubeObjects["cube"].y3+=-1;
+			 cubeObjects["cube"].y4+=-1;
+			 cubeObjects["cube"].y7+=-1;
+			 cubeObjects["cube"].y8+=-1;
+
+		 }
+		}
+
+if(turn_forward==1)// && rot_varForward>-90)
+{
+	rot_varForward=1;
+	/*cubeObjects["cube"].model=glm::mat4(1.0f);
+	glm::mat4 rotateCube=glm::rotate((float)(YZplaneAngle*M_PI/180.0f),glm::vec3(1,0,0));
+
+
+	trans_mat=glm::translate(glm::vec3(-0.5,0.5,1.0));
+	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x6,cubeObjects["cube"].y6,cubeObjects["cube"].z6));
+	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*trans_mat*scaleCube;
+	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
+	rot_varForward=rot_varForward-1;
+	YZplaneAngle=YZplaneAngle-1;
+	if(YZplaneAngle==180 || YZplaneAngle==-180)
+		YZplaneAngle=0;
+		*/
+}
+//cout << YZplaneAngle << endl;
+
+if(rot_varForward	==1)//rot_varForward<=-90
+{
+	//cout << "Inside rot_varForward < -90 condition " << endl;
+
+	turn_forward=0;
+	rot_varForward=0;
+
+	if(cubeObjects["cube"].orientation=="alongX")
+		{
+		cubeObjects["cube"].orientation="alongX";//will remain the same. Think.....
+		cubeObjects["cube"].z1+=-1;
+		cubeObjects["cube"].z2+=-1;
+		cubeObjects["cube"].z3+=-1;
+		cubeObjects["cube"].z4+=-1;
+		cubeObjects["cube"].z5+=-1;
+		cubeObjects["cube"].z6+=-1;
+		cubeObjects["cube"].z7+=-1;
+		cubeObjects["cube"].z8+=-1;
+	}
+	else if(cubeObjects["cube"].orientation=="alongY")
+	{
+	//	cout << "sdfsdfjggsa" << endl;
+		cubeObjects["cube"].orientation="alongZ";//orientation will change accordingly depending upon the previous iteration
+	//	cout << "Current cube orientation " << cubeObjects["cube"].orientation << endl;
+		cubeObjects["cube"].y3+=-1;
+		cubeObjects["cube"].y4+=-1;
+		cubeObjects["cube"].y7+=-1;
+		cubeObjects["cube"].y8+=-1;
+		cubeObjects["cube"].z1-=1;
+		cubeObjects["cube"].z2-=1;
+		cubeObjects["cube"].z3-=1;
+		cubeObjects["cube"].z4-=1;
+		cubeObjects["cube"].z5-=2;
+		cubeObjects["cube"].z6-=2;
+		cubeObjects["cube"].z7-=2;
+		cubeObjects["cube"].z8-=2;
+	}
+	else if(cubeObjects["cube"].orientation=="alongZ")
+	{
+		cubeObjects["cube"].orientation="alongY";
+		cubeObjects["cube"].z1+=-2.0;
+		cubeObjects["cube"].z2+=-2.0;
+		cubeObjects["cube"].z3+=-2.0;
+		cubeObjects["cube"].z4+=-2.0;
+		cubeObjects["cube"].z5+=-1.0;
+		cubeObjects["cube"].z6+=-1.0;
+		cubeObjects["cube"].z7+=-1.0;
+		cubeObjects["cube"].z8+=-1.0;
+		cubeObjects["cube"].y3+=1.0;
+		cubeObjects["cube"].y4+=1.0;
+		cubeObjects["cube"].y7+=1.0;
+		cubeObjects["cube"].y8+=1.0;
 	}
 
+}
+//cout << cubeObjects["cube"].z6 << endl;
+/*#################################################################################################*/
+if(turn_backward==1)// && rot_varBackward<90)
+{
+	rot_varBackward=1;
+	/*cubeObjects["cube"].model=glm::mat4(1.0f);
+	glm::mat4 rotateCube=glm::rotate((float)(YZplaneAngle*M_PI/180.0f),glm::vec3(1,0,0));
+  trans_mat=glm::translate(glm::vec3(-0.5,0.5,-1.0));
+	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x2,cubeObjects["cube"].y2,cubeObjects["cube"].z2));
+	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*trans_mat*scaleCube;
+	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
+	rot_varBackward=rot_varBackward+1;
+	YZplaneAngle=YZplaneAngle+1;
+	if(YZplaneAngle==180 || YZplaneAngle==-180)
+		YZplaneAngle=0;
+		*/
+}
+if(rot_varBackward==1)//rot_varBackward>=90)
+{
+		rot_varBackward=0;
+		turn_backward=0;
+		main_flag=1;
+		if(cubeObjects["cube"].orientation=="alongX")
+		{
+			cubeObjects["cube"].orientation="alongX";
+			cubeObjects["cube"].z1+=1;
+			cubeObjects["cube"].z2+=1;
+			cubeObjects["cube"].z3+=1;
+			cubeObjects["cube"].z4+=1;
+			cubeObjects["cube"].z5+=1;
+			cubeObjects["cube"].z6+=1;
+			cubeObjects["cube"].z7+=1;
+			cubeObjects["cube"].z8+=1;
+		}
+		else if(cubeObjects["cube"].orientation=="alongY")
+		{
+			cubeObjects["cube"].orientation="alongZ";
+			cubeObjects["cube"].z1+=2;
+			cubeObjects["cube"].z2+=2;
+			cubeObjects["cube"].z3+=2;
+			cubeObjects["cube"].z4+=2;
+			cubeObjects["cube"].z5+=1;
+			cubeObjects["cube"].z6+=1;
+		  cubeObjects["cube"].z7+=1;
+			cubeObjects["cube"].z8+=1;
+			cubeObjects["cube"].y3+=-1;
+			cubeObjects["cube"].y4+=-1;
+			cubeObjects["cube"].y7+=-1;
+			cubeObjects["cube"].y8+=-1;
+		}
+		else if(cubeObjects["cube"].orientation=="alongZ")
+		{
+			cubeObjects["cube"].orientation="alongY";
+			cubeObjects["cube"].z1+=2;
+			cubeObjects["cube"].z2+=2;
+			cubeObjects["cube"].z3+=2;
+			cubeObjects["cube"].z4+=2;
+			cubeObjects["cube"].z5+=1;
+			cubeObjects["cube"].z6+=1;
+			cubeObjects["cube"].z7+=1;
+			cubeObjects["cube"].z8+=1;
+			cubeObjects["cube"].y3+=1;
+			cubeObjects["cube"].y4+=1;
+			cubeObjects["cube"].y7+=1;
+			cubeObjects["cube"].y8+=1;
+		}
+}
 
-	// Compute Camera matrix (view)
+//cout << cubeObjects["cube"].orientation << endl;
+
+glm::mat4 finalRoatationMat;
+//Finally draw whaterver object you got
+if(turn_right!=1 && turn_left!=1 && turn_forward!=1 && turn_backward!=1)
+{
+			reached_flag=0;
+			cubeObjects["cube"].model=glm::mat4(1.0f);
+			trans_mat=glm::translate(glm::vec3(   (cubeObjects["cube"].x1+cubeObjects["cube"].x7)/2.0f,
+			            (cubeObjects["cube"].y1+cubeObjects["cube"].y7)/2.0f, (cubeObjects["cube"].z1+cubeObjects["cube"].z7)/2.0f  ));
+									//translate to the center of the cube given from the origin and then draw there.
+
+
+			if(cubeObjects["cube"].orientation=="alongZ")
+				finalRoatationMat=glm::rotate(float(0), glm::vec3(0,0,1));
+			else if(cubeObjects["cube"].orientation=="alongY")
+				finalRoatationMat=glm::rotate(float(-M_PI/2.0), glm::vec3(1,0,0));
+			else if(cubeObjects["cube"].orientation=="alongX")
+				finalRoatationMat=glm::rotate(float(-M_PI/2.0),glm::vec3(0,1,0));
+
+			cubeObjects["cube"].model*=trans_mat*finalRoatationMat*scaleCube;
+			cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
+}
+glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&cubeObjects["cube"].mvp[0][0]);
+draw3DObject(rectangle);
+
+for(i=0;i<11;i++)
+{
+	for(j=0;j<11;j++)
+	{
+		if(arr[i][j]==1)
+		{
+			//cout << "Hello" << endl;
+			glm::mat4 mvpsmall=glm::mat4(1.0f);
+			trans_tile=glm::translate(glm::vec3(j-5,-0.75,i-5+0.5));
+			mvpsmall=VP*trans_tile;
+			glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&mvpsmall[0][0]);
+			draw3DObject(tiles);
+			draw3DObject(tilesLines);
+		}
+	}
+}
+ //draw the final cube. Camera matrix (view)
 	/*  if(doV)
 	    Matrices.view = glm::lookAt(eye, target, up); // Fixed camera for 2D (ortho) in XY plane
 	    else
@@ -586,6 +1077,34 @@ void initGL (GLFWwindow* window, int width, int height)
 	/* Objects should be created before any other gl function and shaders */
 	// Create the models
 	createRectangle();
+	createTile();
+	createTilesLines();
+	cubeObjects["cube"].x1=-0.5; // initalizing each and every corner of the cube(8 vertices);
+	cubeObjects["cube"].x2=0.5;
+	cubeObjects["cube"].x3=0.5;
+	cubeObjects["cube"].x4=-0.5;
+	cubeObjects["cube"].x5=-0.5;
+	cubeObjects["cube"].x6=0.5;
+	cubeObjects["cube"].x7=0.5;
+	cubeObjects["cube"].x8=-0.5;
+	cubeObjects["cube"].y1=-0.5;
+	cubeObjects["cube"].y2=-0.5;
+	cubeObjects["cube"].y3=0.5;
+	cubeObjects["cube"].y4=0.5;
+	cubeObjects["cube"].y5=-0.5;
+	cubeObjects["cube"].y6=-0.5;
+	cubeObjects["cube"].y7=0.5;
+	cubeObjects["cube"].y8=0.5;
+	cubeObjects["cube"].z1=1.0;
+	cubeObjects["cube"].z2=1.0;
+	cubeObjects["cube"].z3=1.0;
+	cubeObjects["cube"].z4=1.0;
+	cubeObjects["cube"].z5=-1.0;
+	cubeObjects["cube"].z6=-1.0;
+	cubeObjects["cube"].z7=-1.0;
+	cubeObjects["cube"].z8=-1.0;
+	cubeObjects["cube"].orientation="alongZ";
+	//initial orientation of the cube. It lies along the z-axis.
 	//	createCam();
 	//	createFloor();
 
