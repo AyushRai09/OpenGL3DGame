@@ -48,7 +48,7 @@ GLuint programID;
 double last_update_time, current_time;
 glm::vec3 rect_pos, floor_pos;
 float rectangle_rotation = 0;
-VAO *tiles,*tilesLines;
+VAO *tiles,*tilesLines,*waterHole,*bridgeSwitch, *rectangleLines;
 
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
@@ -336,7 +336,11 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	//	Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
 
-
+//1 is for the normal bricks
+//2 is for the target water hole
+//3 is for the bridgeSwitch
+//4 is for the bridge bricks that will only be visible upon pressing the switch
+//5 is for the fragile bricks on which you can't stand on one face but can stay with two faces.
 int arr[21][21]=
 {
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
@@ -352,7 +356,7 @@ int arr[21][21]=
 {0,0,0,0,0,0,0,0,0,1, 1, 1,1,0,0,0,0,0,0,0,0},
 
 {0,0,0,0,0,0,0,0,0,1, 1, 1,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,1, 1, 1,0,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
@@ -411,47 +415,134 @@ void createRectangle ()
 	};
 
 	GLfloat color_buffer_data [] = {
-		0.583f,  0.771f,  0.014f,
-		0.609f,  0.115f,  0.436f,
-		0.327f,  0.483f,  0.844f,
-		0.822f,  0.569f,  0.201f,
-		0.435f,  0.602f,  0.223f,
-		0.310f,  0.747f,  0.185f,
-		0.597f,  0.770f,  0.761f,
-		0.559f,  0.436f,  0.730f,
-		0.359f,  0.583f,  0.152f,
-		0.483f,  0.596f,  0.789f,
-		0.559f,  0.861f,  0.639f,
-		0.195f,  0.548f,  0.859f,
-		0.014f,  0.184f,  0.576f,
-		0.771f,  0.328f,  0.970f,
-		0.406f,  0.615f,  0.116f,
-		0.676f,  0.977f,  0.133f,
-		0.971f,  0.572f,  0.833f,
-		0.140f,  0.616f,  0.489f,
-		0.997f,  0.513f,  0.064f,
-		0.945f,  0.719f,  0.592f,
-		0.543f,  0.021f,  0.978f,
-		0.279f,  0.317f,  0.505f,
-		0.167f,  0.620f,  0.077f,
-		0.347f,  0.857f,  0.137f,
-		0.055f,  0.953f,  0.042f,
-		0.714f,  0.505f,  0.345f,
-		0.783f,  0.290f,  0.734f,
-		0.722f,  0.645f,  0.174f,
-		0.302f,  0.455f,  0.848f,
-		0.225f,  0.587f,  0.040f,
-		0.517f,  0.713f,  0.338f,
-		0.053f,  0.959f,  0.120f,
-		0.393f,  0.621f,  0.362f,
-		0.673f,  0.211f,  0.457f,
-		0.820f,  0.883f,  0.371f,
-		0.982f,  0.099f,  0.879f
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
+		228.0/255.0,  	55/255.0, 24/255.0,
 	};
 
 	// create3DObject creates and returns a handle to a VAO that can be used later
 	rectangle = create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_FILL);
+	//rectangleLines=create3DObject(GL_TRIANGLES,36,vertex_buffer_data,color_buffer_data,GL_LINE);
 }
+void createRectangleLines ()
+{
+	// GL3 accepts only Triangles. Quads are not supported
+	GLfloat vertex_buffer_data [] = {
+		-0.5, 0.5, 1.0f,
+		-0.5, -0.5,1.0f,
+		0.5, -0.5, 1.0f,
+		-0.5, 0.5, 1.0f,
+		0.5, -0.5, 1.0f,
+		0.5, 0.5, 1.0f,
+		0.5, 0.5, 1.0f,
+		0.5, -0.5, 1.0f,
+		0.5, -0.5, -1.0f,
+		0.5, 0.5, 1.0f,
+		0.5, -0.5, -1.0f,
+		0.5, 0.5, -1.0f,
+		0.5, 0.5, -1.0f,
+		0.5, -0.5, -1.0f,
+		-0.5, -0.5, -1.0f,
+		0.5, 0.5, -1.0f,
+		-0.5, -0.5, -1.0f,
+		-0.5, 0.5, -1.0f,
+		-0.5, 0.5, -1.0f,
+		-0.5, -0.5, -1.0f,
+		-0.5, -0.5, 1.0f,
+		-0.5, 0.5, -1.0f,
+		-0.5, -0.5, 1.0f,
+		-0.5, 0.5, 1.0f,
+		-0.5, 0.5, -1.0f,
+		-0.5, 0.5, 1.0f,
+		0.5, 0.5, 1.0f,
+		-0.5, 0.5, -1.0f,
+		0.5, 0.5, 1.0f,
+		0.5, 0.5, -1.0f,
+		-0.5, -0.5, 1.0f,
+		-0.5, -0.5, -1.0f,
+		0.5, -0.5, -1.0f,
+		-0.5, -0.5, 1.0f,
+		0.5, -0.5, -1.0f,
+		0.5, -0.5, 1.0f,
+
+	};
+
+	GLfloat color_buffer_data [] = {
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+		0.0,0.0,0.0,
+	};
+
+	// create3DObject creates and returns a handle to a VAO that can be used later
+	rectangleLines=create3DObject(GL_TRIANGLES,36,vertex_buffer_data,color_buffer_data,GL_LINE);
+}
+
 void createCam ()
 {
 	// GL3 accepts only Triangles. Quads are not supported
@@ -511,6 +602,19 @@ void createTile()
 		0.5, -0.25, -0.5,
 		0.5, -0.25, 0.5,
 
+		-0.5,0.25,-0.5,
+		0.5,0.5,0.5,
+		0.0,0.0,0.0,
+
+		-0.5,0.25,0.5,
+		0.5,-0.25,0.5,
+		0.0,0.0,0.5,
+
+		0.5,0.25,0.5,
+		0.5,-0.25,0.5,
+		0.5,0.0,0.5,
+
+
 	};
 
 	GLfloat color_buffer_data [] = {
@@ -551,12 +655,21 @@ void createTile()
 		1.0,1.0,1.0,
 		1.0,1.0,1.0,
 
+		1.0,1.0,1.0, //top view, clears all the diagonal lines when viewed from top
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+
+		1.0,1.0,1.0, // when viewed along the z -axis
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
+
+		1.0,1.0,1.0, // when viewed along x-axis, clears all the diagonals
+		1.0,1.0,1.0,
+		1.0,1.0,1.0,
 	};
 
 	// create3DObject creates and returns a handle to a VAO that can be used later
-	tiles=create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_FILL);
-
-
+	tiles=create3DObject(GL_TRIANGLES, 45, vertex_buffer_data, color_buffer_data, GL_FILL);
 }
 void createTilesLines()
 {
@@ -640,7 +753,106 @@ void createTilesLines()
 
 	tilesLines=create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_LINE);
 }
+void createHoles() // create the hole in which the block will fall finally.
+{
+	// GL3 accepts only Triangles. Quads are not supported
+	GLfloat vertex_buffer_data [] = {
+		-0.5, 0.25, 0.5,
+		-0.5, -0.25,0.5,
+		0.5, -0.25, 0.5,
+		-0.5, 0.25, 0.5,
+		0.5, -0.25, 0.5,
+		0.5, 0.25, 0.5,
+		0.5, 0.25, 0.5,
+		0.5, -0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, 0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, 0.25, -0.5,
+		0.5, 0.25, -0.5,
+		0.5, -0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		0.5, 0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, 0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, 0.25, 0.5,
+		0.5, 0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		0.5, 0.25, 0.5,
+		0.5, 0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, -0.25, -0.5,
+		0.5, -0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, -0.25, 0.5,
+
+	};
+
+	GLfloat color_buffer_data [] = {
+		41/255.0,234/255.0,223/255.0, //blue color of the hole which will semm like water
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+		41/255.0,234/255.0,223/255.0,
+
+	};
+
+	// create3DObject creates and returns a handle to a VAO that can be used later
+	waterHole=create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_FILL);
+}
+int  checkSpecialConditions()
+{
+	if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].x1== 2.5 && cubeObjects["cube"].x4==2.5 && cubeObjects["cube"].x5==2.5
+	 && cubeObjects["cube"].x8==2.5 && cubeObjects["cube"].x2==3.5 && cubeObjects["cube"].x3==3.5 && cubeObjects["cube"].x6==3.5 && cubeObjects["cube"].x7==3.5)
+	 	return 1; // when you achieve the goal, you return 1;
+}
 float camera_rotation_angle = 90;
+int status=1;
+float k=0;
 
 /* Render the scene with openGL */
 /* Edit this function according to your assignment */
@@ -657,7 +869,7 @@ void draw (GLFWwindow* window)
 
 //	glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
 
-  glm::vec3 eye(2.5,2.5,2.5);
+  glm::vec3 eye(3,3,3);
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
 	glm::vec3 target (0, 0, 0);
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
@@ -702,9 +914,6 @@ void draw (GLFWwindow* window)
 	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
 	rot_varRight=rot_varRight-1;
-	XYplaneAngle=XYplaneAngle-1;
-	if(XYplaneAngle==180 || XYplaneAngle==-180)
-		XYplaneAngle=0;
 	}
 	if(rot_varRight<-90)
 			{
@@ -793,7 +1002,6 @@ if(rot_varLeft>90)
 		{
 			rot_varLeft=0;
 			turn_left=0;
-			main_flag=1;
 
 			if(cubeObjects["cube"].orientation=="alongZ")
 			{
@@ -1017,7 +1225,7 @@ if(rot_varBackward>=90)
 
 glm::mat4 finalRoatationMat;
 //Finally draw whaterver object you got
-if(turn_right!=1 && turn_left!=1 && turn_forward!=1 && turn_backward!=1)
+if(turn_right!=1 && turn_left!=1 && turn_forward!=1 && turn_backward!=1 && status==1)
 {
 			reached_flag=0;
 			cubeObjects["cube"].model=glm::mat4(1.0f);
@@ -1038,23 +1246,46 @@ if(turn_right!=1 && turn_left!=1 && turn_forward!=1 && turn_backward!=1)
 }
 glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&cubeObjects["cube"].mvp[0][0]);
 draw3DObject(rectangle);
+draw3DObject(rectangleLines);
+
+if(checkSpecialConditions()==1)
+{
+//		cout << "Hello" << endl;
+		if(k<=5)
+		{
+			glm::mat4 down_trans=glm::translate(glm::vec3(0,-k,0));
+			cubeObjects["cube"].mvp=VP*down_trans*cubeObjects["cube"].model;
+			glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&cubeObjects["cube"].mvp[0][0]);
+			draw3DObject(rectangle);
+	//		draw3DObject(rectangleLines);
+			k=k+0.1;
+		}
+		status=0;
+		if(k>=5)
+		{
+			glfwTerminate();
+			exit(EXIT_SUCCESS);
+		}
+}
 
 for(i=0;i<21;i++)
 {
 	for(j=0;j<21;j++)
 	{
-		if(arr[i][j]==1)
-		{
-			//cout << "Hello" << endl;
 			glm::mat4 mvpsmall=glm::mat4(1.0f);
 			trans_tile=glm::translate(glm::vec3(j-10,-0.75,i-10+0.5));
 			mvpsmall=VP*trans_tile;
 			glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&mvpsmall[0][0]);
-			draw3DObject(tiles);
-			draw3DObject(tilesLines);
-		}
+			if(arr[i][j]==1)
+			{
+				draw3DObject(tiles);
+				draw3DObject(tilesLines);
+			}
+			else if(arr[i][j]==2)
+				draw3DObject(waterHole);
 	}
 }
+
  //draw the final cube. Camera matrix (view)
 	/*  if(doV)
 	    Matrices.view = glm::lookAt(eye, target, up); // Fixed camera for 2D (ortho) in XY plane
@@ -1152,9 +1383,11 @@ void initGL (GLFWwindow* window, int width, int height)
 {
 	/* Objects should be created before any other gl function and shaders */
 	// Create the models
+	createRectangleLines();
 	createRectangle();
-	createTile();
 	createTilesLines();
+	createTile();
+	createHoles();
 	cubeObjects["cube"].x1=-0.5; // initalizing each and every corner of the cube(8 vertices);
 	cubeObjects["cube"].x2=0.5;
 	cubeObjects["cube"].x3=0.5;
