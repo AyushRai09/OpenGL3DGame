@@ -337,19 +337,32 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 }
 
 
-int arr[11][11]={{0,0,0,0,0, 0, 0,0,0,0,1},
-{0,0,0,0,0, 0, 0,0,0,0,0},
-{0,0,0,0,0, 0, 0,0,0,0,0},
-{0,0,0,0,0, 0, 0,0,0,0,0},
-{0,0,0,0,0, 0, 0,0,0,0,0},
+int arr[21][21]=
+{
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,1,1,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 1,1,1,1,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 1,1,2,1,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 1,1,1,1,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 1, 1,1,1,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 1, 1,1,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 1, 1,1,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,1, 1, 1,1,0,0,0,0,0,0,0,0},
 
-{0,0,0,0,0, 1, 0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,1, 1, 1,1,0,0,0,0,0,0,0,0},
 
-{0,0,0,0,0, 0, 0,0,0,0,0},
-{0,0,0,0,0, 0, 0,0,0,0,0},
-{0,0,0,0,0, 0, 0,0,0,0,0},
-{0,0,0,0,0, 0, 0,0,0,0,0},
-{0,0,0,0,0, 0, 0,0,0,0,0}};
+{0,0,0,0,0,0,0,0,0,1, 1, 1,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+};
 
 VAO *rectangle, *cam, *floor_vao;
 
@@ -644,11 +657,11 @@ void draw (GLFWwindow* window)
 
 //	glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
 
-  glm::vec3 eye(0,0,3);
+  glm::vec3 eye(2.5,2.5,2.5);
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
 	glm::vec3 target (0, 0, 0);
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-	glm::vec3 up (0,1,0);
+	glm::vec3 up (-1,1,-1);
 
 	Matrices.view=glm::lookAt(eye,target,up);
 //	Matrices.view=glm::mat4(1.0f);
@@ -829,26 +842,40 @@ if(rot_varLeft>90)
 		 }
 		}
 
-if(turn_forward==1)// && rot_varForward>-90)
+if(turn_forward==1 && rot_varForward>-90)
 {
-	rot_varForward=1;
-	/*cubeObjects["cube"].model=glm::mat4(1.0f);
-	glm::mat4 rotateCube=glm::rotate((float)(YZplaneAngle*M_PI/180.0f),glm::vec3(1,0,0));
-
-
+	if(cubeObjects["cube"].orientation=="alongX")
+	{
+		prerotation=glm::rotate((float)(M_PI/2.0),glm::vec3(0,1,0));
+		glm::mat4 aBitTrans=glm::translate(glm::vec3(-2,0,0));
+		prerotation=aBitTrans*prerotation;
+		rotateCube=glm::rotate((float)(rot_varForward*M_PI/180),glm::vec3(1,0,0));
+	}
+	else if(cubeObjects["cube"].orientation=="alongY")
+	{
+		prerotation=glm::rotate((float)(-M_PI/2.0),glm::vec3(1,0,0));
+		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,1));
+		prerotation=aBitTrans*prerotation;
+		rotateCube=glm::rotate((float)(rot_varForward*M_PI/180),glm::vec3(1,0,0));
+	}
+	else if(cubeObjects["cube"].orientation=="alongZ")
+	{
+		prerotation=glm::rotate((float)(0),glm::vec3(1,0,0));
+//		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,1));
+	//	prerotation=aBitTrans*prerotation;
+		rotateCube=glm::rotate((float)(rot_varForward*M_PI/180),glm::vec3(1,0,0));
+	}
+	cubeObjects["cube"].model=glm::mat4(1.0f);
 	trans_mat=glm::translate(glm::vec3(-0.5,0.5,1.0));
+
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x6,cubeObjects["cube"].y6,cubeObjects["cube"].z6));
-	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*trans_mat*scaleCube;
+	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
 	rot_varForward=rot_varForward-1;
-	YZplaneAngle=YZplaneAngle-1;
-	if(YZplaneAngle==180 || YZplaneAngle==-180)
-		YZplaneAngle=0;
-		*/
 }
 //cout << YZplaneAngle << endl;
 
-if(rot_varForward	==1)//rot_varForward<=-90
+if(rot_varForward<=-90)
 {
 	//cout << "Inside rot_varForward < -90 condition " << endl;
 
@@ -905,26 +932,41 @@ if(rot_varForward	==1)//rot_varForward<=-90
 }
 //cout << cubeObjects["cube"].z6 << endl;
 /*#################################################################################################*/
-if(turn_backward==1)// && rot_varBackward<90)
+if(turn_backward==1 && rot_varBackward<90)
 {
-	rot_varBackward=1;
-	/*cubeObjects["cube"].model=glm::mat4(1.0f);
-	glm::mat4 rotateCube=glm::rotate((float)(YZplaneAngle*M_PI/180.0f),glm::vec3(1,0,0));
+	if(cubeObjects["cube"].orientation=="alongX")
+	{
+		prerotation=glm::rotate((float)(-M_PI/2.0),glm::vec3(0,1,0));
+		glm::mat4 aBitTrans=glm::translate(glm::vec3(-2,0,0));
+		prerotation=aBitTrans*prerotation;
+		rotateCube=glm::rotate((float)(rot_varBackward*M_PI/180),glm::vec3(1,0,0));
+	}
+	else if(cubeObjects["cube"].orientation=="alongY")
+	{
+		prerotation=glm::rotate((float)(M_PI/2.0),glm::vec3(1,0,0));
+		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,-1));
+		prerotation=aBitTrans*prerotation;
+		rotateCube=glm::rotate((float)(rot_varBackward*M_PI/180),glm::vec3(1,0,0));
+	}
+	else if(cubeObjects["cube"].orientation=="alongZ")
+	{
+		prerotation=glm::rotate((float)(0),glm::vec3(1,0,0));
+//		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,1));
+	//	prerotation=aBitTrans*prerotation;
+		rotateCube=glm::rotate((float)(rot_varBackward*M_PI/180),glm::vec3(1,0,0));
+	}
+
+	cubeObjects["cube"].model=glm::mat4(1.0f);
   trans_mat=glm::translate(glm::vec3(-0.5,0.5,-1.0));
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x2,cubeObjects["cube"].y2,cubeObjects["cube"].z2));
-	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*trans_mat*scaleCube;
+	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
 	rot_varBackward=rot_varBackward+1;
-	YZplaneAngle=YZplaneAngle+1;
-	if(YZplaneAngle==180 || YZplaneAngle==-180)
-		YZplaneAngle=0;
-		*/
 }
-if(rot_varBackward==1)//rot_varBackward>=90)
+if(rot_varBackward>=90)
 {
 		rot_varBackward=0;
 		turn_backward=0;
-		main_flag=1;
 		if(cubeObjects["cube"].orientation=="alongX")
 		{
 			cubeObjects["cube"].orientation="alongX";
@@ -956,14 +998,14 @@ if(rot_varBackward==1)//rot_varBackward>=90)
 		else if(cubeObjects["cube"].orientation=="alongZ")
 		{
 			cubeObjects["cube"].orientation="alongY";
-			cubeObjects["cube"].z1+=2;
-			cubeObjects["cube"].z2+=2;
-			cubeObjects["cube"].z3+=2;
-			cubeObjects["cube"].z4+=2;
-			cubeObjects["cube"].z5+=1;
-			cubeObjects["cube"].z6+=1;
-			cubeObjects["cube"].z7+=1;
-			cubeObjects["cube"].z8+=1;
+			cubeObjects["cube"].z1+=1;
+			cubeObjects["cube"].z2+=1;
+			cubeObjects["cube"].z3+=1;
+			cubeObjects["cube"].z4+=1;
+			cubeObjects["cube"].z5+=2;
+			cubeObjects["cube"].z6+=2;
+			cubeObjects["cube"].z7+=2;
+			cubeObjects["cube"].z8+=2;
 			cubeObjects["cube"].y3+=1;
 			cubeObjects["cube"].y4+=1;
 			cubeObjects["cube"].y7+=1;
@@ -997,15 +1039,15 @@ if(turn_right!=1 && turn_left!=1 && turn_forward!=1 && turn_backward!=1)
 glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&cubeObjects["cube"].mvp[0][0]);
 draw3DObject(rectangle);
 
-for(i=0;i<11;i++)
+for(i=0;i<21;i++)
 {
-	for(j=0;j<11;j++)
+	for(j=0;j<21;j++)
 	{
 		if(arr[i][j]==1)
 		{
 			//cout << "Hello" << endl;
 			glm::mat4 mvpsmall=glm::mat4(1.0f);
-			trans_tile=glm::translate(glm::vec3(j-5,-0.75,i-5+0.5));
+			trans_tile=glm::translate(glm::vec3(j-10,-0.75,i-10+0.5));
 			mvpsmall=VP*trans_tile;
 			glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&mvpsmall[0][0]);
 			draw3DObject(tiles);
