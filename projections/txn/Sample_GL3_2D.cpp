@@ -644,36 +644,56 @@ void draw (GLFWwindow* window)
 
 //	glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
 
-  glm::vec3 eye(0,20,0);
+  glm::vec3 eye(0,0,3);
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
 	glm::vec3 target (0, 0, 0);
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-	glm::vec3 up (0,0,-1);
+	glm::vec3 up (0,1,0);
 
 	Matrices.view=glm::lookAt(eye,target,up);
 //	Matrices.view=glm::mat4(1.0f);
 	glm::mat4 VP=Matrices.projection*Matrices.view;
 	glm::mat4 scaleCube=glm::scale(glm::vec3(1,1,1));
-	glm::mat4 trans_mat,trans_tile;
+	glm::mat4 trans_mat,trans_tile,rotateCube,prerotation;
 /*############################################################################################################*/
 //XYplaneAngle for turn_right and turn_left, YZplaneAngle for turn_forward and turn_backward.
-	if(turn_right==1)// && rot_varRight>=-90) //do this for the case when player presses the key 'd'
+	if(turn_right==1 && rot_varRight>=-90) //do this for the case when player presses the key 'd'
 	{
 
-		rot_varRight=1;
-/*	cubeObjects["cube"].model=glm::mat4(1.0f);
-	glm::mat4 rotateCube=glm::rotate((float)(XYplaneAngle*M_PI/180.0f),glm::vec3(0,0,1));
+		//rot_varRight=1;
+		if(cubeObjects["cube"].orientation=="alongZ")
+			{
+				prerotation=glm::rotate((float)(0),glm::vec3(0,0,1));
+				rotateCube=glm::rotate((float)(rot_varRight*M_PI/180),glm::vec3(0,0,1));
+			}
+		else if(cubeObjects["cube"].orientation=="alongY")
+		{
+			prerotation=glm::rotate((float)(M_PI/2.0f),glm::vec3(1,0,0));
+			glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,-1));
+			prerotation=aBitTrans*prerotation;
+			rotateCube=glm::rotate((float)((rot_varRight*M_PI/180)),glm::vec3(0,0,1));
+		}
+		else if(cubeObjects["cube"].orientation=="alongX")
+		{
+				prerotation=glm::rotate((float)(-M_PI/2.0), glm::vec3(0,1,0));
+				glm::mat4 aBitTrans=glm::translate(glm::vec3(-2,0,0));
+				prerotation=aBitTrans*prerotation;
+				rotateCube=glm::rotate((float)(rot_varRight*M_PI/180),glm::vec3(0,0,1));
+		}
+
+	cubeObjects["cube"].model=glm::mat4(1.0f);
+//	glm::mat4 rotateCube=glm::rotate((float)(XYplaneAngle*M_PI/180.0f),glm::vec3(0,0,1));
 	trans_mat=glm::translate(glm::vec3(-0.5,0.5,-1.0));
 
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x2,cubeObjects["cube"].y2,cubeObjects["cube"].z2));
-	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*trans_mat*scaleCube;
+	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
 	rot_varRight=rot_varRight-1;
 	XYplaneAngle=XYplaneAngle-1;
 	if(XYplaneAngle==180 || XYplaneAngle==-180)
-		XYplaneAngle=0; */
+		XYplaneAngle=0;
 	}
-	if(rot_varRight==1)//rot_varRight<-90
+	if(rot_varRight<-90)
 			{
 				rot_varRight=0;
 				turn_right=0;
@@ -726,23 +746,37 @@ void draw (GLFWwindow* window)
 				}
 			}
 /*###############################################################################################*/
-if(turn_left==1)// && rot_varLeft<=90) // when player presses 'a'
+if(turn_left==1 && rot_varLeft<=90) // when player presses 'a'
 {
-	rot_varLeft=1;
-/*	cubeObjects["cube"].model=glm::mat4(1.0f);
-	glm::mat4 rotateCube=glm::rotate((float)(XYplaneAngle*M_PI/180.0f),glm::vec3(0,0,1));
+	//rot_varLeft=1;
+	if(cubeObjects["cube"].orientation=="alongZ")
+	{
+		prerotation=glm::rotate((float)(0), glm::vec3(0,0,1));
+		rotateCube=glm::rotate((float)(rot_varLeft*M_PI/180),glm::vec3(0,0,1));
+	}
+	else if(cubeObjects["cube"].orientation=="alongY")
+	{
+			prerotation=glm::rotate((float)(M_PI/2.0),glm::vec3(1,0,0));
+			glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,-1));
+			prerotation=aBitTrans*prerotation;
+			rotateCube=glm::rotate((float)(rot_varLeft*M_PI/180),glm::vec3(0,0,1));
+	}
+	else if(cubeObjects["cube"].orientation=="alongX")
+	{
+		prerotation=glm::rotate((float)(-M_PI/2.0),glm::vec3(0,1,0));
+		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,-1));
+		prerotation=aBitTrans*prerotation;
+		rotateCube=glm::rotate((float)(rot_varLeft*M_PI/180),glm::vec3(0,0,1));
+	}
+	cubeObjects["cube"].model=glm::mat4(1.0f);
 	trans_mat=glm::translate(glm::vec3(0.5,0.5,-1.0));
 
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x1,cubeObjects["cube"].y1,cubeObjects["cube"].z1));
-	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*trans_mat*scaleCube;
+	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
 	rot_varLeft=rot_varLeft+1;
-	XYplaneAngle=XYplaneAngle+1;
-	if(XYplaneAngle==180 || XYplaneAngle==-180)
-		XYplaneAngle=0;
-	*/
 }
-if(rot_varLeft==1)//rot_varLeft>90)
+if(rot_varLeft>90)
 		{
 			rot_varLeft=0;
 			turn_left=0;
