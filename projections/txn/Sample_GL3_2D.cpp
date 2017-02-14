@@ -53,7 +53,7 @@ int targetReached=0, bridgeSwitchPressed=0;
 int top_view=0, block_view=0, follower_view=0, default_view=1;
 int rowArrayCounterA=10, colArrayCounterA=11, rowArrayCounterB=11, colArrayCounterB=11;
 int xa=0, ya=0, za=0, xb=0, yb=0, zb=0, xc=0, yc=0, zc=0;
-int fallStatus=0;
+int fallStatus=0,level=2;
 float downfall=0;
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
@@ -374,8 +374,12 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 //3 is for the bridgeSwitch
 //4 is for the bridge bricks that will only be visible upon pressing the switch
 //5 is for the fragile bricks on which you can't stand on one face but can stay with two faces.
-int arr[21][21]=
-{
+//int arr[21][21];
+//void arr_init()
+//{
+
+//if(level==1)'
+int arr[21][21]={
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 0, 0,1,1,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 0, 1,1,1,1,0,0,0,0,0,0},
@@ -398,8 +402,43 @@ int arr[21][21]=
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0}
 };
+void arr_init()
+{
+//	if (level==2)
+	int arrLevel[21][21]={
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 1, 1,1,1,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 1, 2,1,1,1,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 1, 1,1,1,1,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 1,1,0,1,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 1, 1,1,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,1, 0, 0,4,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,4,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,3,0, 1, 1,1,0,0,0,0,0,0,0,0},
+
+	{0,0,0,0,0,0,0,0,1,0, 1, 1,1,0,0,0,0,0,0,0,0},
+
+	{0,0,0,0,0,0,0,0,1,0, 1, 1,1,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,1,1, 1, 1,1,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0}
+	};
+	int i=0, j=0;
+	for(i=0;i<21;i++)
+	for(j=0;j<21;j++)
+	arr[i][j]=arrLevel[i][j];
+
+}
+//else
 
 VAO *rectangle, *cam, *floor_vao;
 
@@ -1142,8 +1181,11 @@ void createBridgeTilesLines()
 
 void checkSpecialConditions()
 {
+	if(level==1)
+	{
 	if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].x1== 2.5 && cubeObjects["cube"].x4==2.5 && cubeObjects["cube"].x5==2.5
-	 && cubeObjects["cube"].x8==2.5 && cubeObjects["cube"].x2==3.5 && cubeObjects["cube"].x3==3.5 && cubeObjects["cube"].x6==3.5 && cubeObjects["cube"].x7==3.5)
+	 && cubeObjects["cube"].x8==2.5 && cubeObjects["cube"].x2==3.5 && cubeObjects["cube"].x3==3.5 && cubeObjects["cube"].x6==3.5 && cubeObjects["cube"].x7==3.5
+  && cubeObjects["cube"].z1==-6)
 	 	{targetReached=1; return;} // when you achieve the goal, you return 1;
 	if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].z1==-1 && cubeObjects["cube"].z2==-1 && cubeObjects["cube"].z3==-1
 	   && cubeObjects["cube"].z4==-1 && cubeObjects["cube"].z5==-2 && cubeObjects["cube"].z6==-2 && cubeObjects["cube"].z7==-2
@@ -1154,6 +1196,24 @@ void checkSpecialConditions()
 			 bridgeSwitchPressed=1;
 			 createBridgeSwitch(); // when the bridgeSwitch gets pressed, so switch changes colour from dark blue to light blue.
 		 }
+	 }
+	 else if(level==2)
+	 {
+		 if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].x1== 2.5 && cubeObjects["cube"].x4==2.5 && cubeObjects["cube"].x5==2.5
+	 	 && cubeObjects["cube"].x8==2.5 && cubeObjects["cube"].x2==3.5 && cubeObjects["cube"].x3==3.5 && cubeObjects["cube"].x6==3.5 && cubeObjects["cube"].x7==3.5
+	   && cubeObjects["cube"].z1==-6)
+	 	 	{targetReached=1; return;}
+
+			if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].z1==-1 && cubeObjects["cube"].z2==-1 && cubeObjects["cube"].z3==-1
+			   && cubeObjects["cube"].z4==-1 && cubeObjects["cube"].z5==-2 && cubeObjects["cube"].z6==-2 && cubeObjects["cube"].z7==-2
+				 && cubeObjects["cube"].z8==-2 && cubeObjects["cube"].x1==-2.5 && cubeObjects["cube"].x4==-2.5 && cubeObjects["cube"].x5==-2.5 && cubeObjects["cube"].x8==-2.5
+				 && cubeObjects["cube"].x2==-1.5 && cubeObjects["cube"].x3==-1.5 && cubeObjects["cube"].x6==-1.5 && cubeObjects["cube"].x7==-1.5)
+				 {
+		 	//		cout << "switch detected" << endl;
+		 			 bridgeSwitchPressed=1;
+		 			 createBridgeSwitch(); // when the bridgeSwitch gets pressed, so switch changes colour from dark blue to light blue.
+		 		 }
+	 }
 	if(cubeObjects["cube"].orientation=="alongZ")
 	{
 		rowArrayCounterA=cubeObjects["cube"].z1+10-1;
@@ -1233,11 +1293,13 @@ void draw (GLFWwindow* window)
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
 	//glm::vec3 up (0,0,-1);
 	Matrices.view=glm::lookAt(eye,target,up);
-
 	}
 	else if(block_view==1)
 	{
-
+		glm::vec3 eye(cubeObjects["cube"].x5,cubeObjects["cube"].y5+1, cubeObjects["cube"].z5-0.3);
+		glm::vec3 target(3.5,0,-7);
+		glm::vec3 up(0,1,0);
+		Matrices.view=glm::lookAt(eye,target,up);
 	}
 	else if(default_view==1)
 	{
@@ -1259,7 +1321,10 @@ void draw (GLFWwindow* window)
 	}
 	else if(follower_view==1)
 	{
-
+		glm::vec3 eye((cubeObjects["cube"].x1+cubeObjects["cube"].x2)/2.0,cubeObjects["cube"].y1+3, cubeObjects["cube"].z1);
+		glm::vec3 target(cubeObjects["cube"].x2,0,cubeObjects["cube"].z5-5);
+		glm::vec3 up(0,1,0);
+		Matrices.view=glm::lookAt(eye,target,up);
 	}
 
 //	Matrices.view=glm::mat4(1.0f);
@@ -1664,15 +1729,47 @@ if(targetReached==1)
 			glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&cubeObjects["cube"].mvp[0][0]);
 			draw3DObject(rectangle);
 	//		draw3DObject(rectangleLines);
-			cubeHoleSliderVar=cubeHoleSliderVar+0.2;
+			cubeHoleSliderVar=cubeHoleSliderVar+0.1;
 		}
 		status=0;
 		if(cubeHoleSliderVar>=4)
 		{
-			glfwTerminate();
-			exit(EXIT_SUCCESS);
+			fallStatus=0;
+			targetReached=0; //reinitialize the goal achieve state
+			cubeHoleSliderVar=0; // reinitialize the sliding transition
+			level=2; //increase the level
+			bridgeSwitchPressed=0; // reset the bridgeSwitchPressed;
+			status=1;
+			cubeObjects["cube"].x1=-0.5; // initalizing each and every corner of the cube(8 vertices);
+			cubeObjects["cube"].x2=0.5;
+			cubeObjects["cube"].x3=0.5;
+			cubeObjects["cube"].x4=-0.5;
+			cubeObjects["cube"].x5=-0.5;
+			cubeObjects["cube"].x6=0.5;
+			cubeObjects["cube"].x7=0.5;
+			cubeObjects["cube"].x8=-0.5;
+			cubeObjects["cube"].y1=-0.5;
+			cubeObjects["cube"].y2=-0.5;
+			cubeObjects["cube"].y3=0.5;
+			cubeObjects["cube"].y4=0.5;
+			cubeObjects["cube"].y5=-0.5;
+			cubeObjects["cube"].y6=-0.5;
+			cubeObjects["cube"].y7=0.5;
+			cubeObjects["cube"].y8=0.5;
+			cubeObjects["cube"].z1=1.0;
+			cubeObjects["cube"].z2=1.0;
+			cubeObjects["cube"].z3=1.0;
+			cubeObjects["cube"].z4=1.0;
+			cubeObjects["cube"].z5=-1.0;
+			cubeObjects["cube"].z6=-1.0;
+			cubeObjects["cube"].z7=-1.0;
+			cubeObjects["cube"].z8=-1.0;
+			cubeObjects["cube"].orientation="alongZ";
+			//glfwTerminate();
+			//exit(EXIT_SUCCESS);
 		}
 }
+
 
 for(i=0;i<21;i++)
 {
@@ -1877,7 +1974,8 @@ int main (int argc, char** argv)
 	while (!glfwWindowShouldClose(window)) {
 		// clear the color and depth in the frame buffer
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
-
+		if(level==2)
+			arr_init();
 		draw(window);
 		// OpenGL Draw commands
 			current_time = glfwGetTime();
@@ -1901,4 +1999,5 @@ int main (int argc, char** argv)
 
 	glfwTerminate();
 	//    exit(EXIT_SUCCESS);
+
 }
