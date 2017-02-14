@@ -54,6 +54,7 @@ int top_view=0, block_view=0, follower_view=0, default_view=1;
 int rowArrayCounterA=10, colArrayCounterA=11, rowArrayCounterB=11, colArrayCounterB=11;
 int xa=0, ya=0, za=0, xb=0, yb=0, zb=0, xc=0, yc=0, zc=0;
 int fallStatus=0;
+float downfall=0;
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
 
@@ -1298,7 +1299,7 @@ void draw (GLFWwindow* window)
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x2,cubeObjects["cube"].y2,cubeObjects["cube"].z2));
 	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
-	rot_varRight=rot_varRight-3;
+	rot_varRight=rot_varRight-2;
 	}
 	if(rot_varRight<-90)
 			{
@@ -1383,7 +1384,7 @@ if(turn_left==1 && rot_varLeft<=90) // when player presses 'a'
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x1,cubeObjects["cube"].y1,cubeObjects["cube"].z1));
 	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
-	rot_varLeft=rot_varLeft+3;
+	rot_varLeft=rot_varLeft+2;
 }
 if(rot_varLeft>90)
 		{
@@ -1469,7 +1470,7 @@ if(turn_forward==1 && rot_varForward>-90)
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x6,cubeObjects["cube"].y6,cubeObjects["cube"].z6));
 	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
-	rot_varForward=rot_varForward-3;
+	rot_varForward=rot_varForward-2;
 }
 //cout << YZplaneAngle << endl;
 
@@ -1562,7 +1563,7 @@ if(turn_backward==1 && rot_varBackward<90)
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x2,cubeObjects["cube"].y2,cubeObjects["cube"].z2));
 	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
-	rot_varBackward=rot_varBackward+3;
+	rot_varBackward=rot_varBackward+2;
 }
 if(rot_varBackward>=90)
 {
@@ -1634,9 +1635,18 @@ if(turn_right!=1 && turn_left!=1 && turn_forward!=1 && turn_backward!=1 && statu
 			else if(cubeObjects["cube"].orientation=="alongX")
 				finalRoatationMat=glm::rotate(float(-M_PI/2.0),glm::vec3(0,1,0));
 
-			
 
-			cubeObjects["cube"].model*=trans_mat*finalRoatationMat*scaleCube;
+
+				if(fallStatus==1)
+				{
+					glm::mat4 oneMoremat=glm::translate(glm::vec3(0,-downfall,0));
+					cubeObjects["cube"].model*=oneMoremat*trans_mat*finalRoatationMat;
+					downfall+=0.2;
+				}
+				if(fallStatus==1 && downfall>=4)
+				{glfwTerminate();exit(EXIT_SUCCESS);}
+			if(fallStatus!=1)
+				cubeObjects["cube"].model*=trans_mat*finalRoatationMat*scaleCube;
 			cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
 }
 glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&cubeObjects["cube"].mvp[0][0]);
@@ -1647,17 +1657,17 @@ checkSpecialConditions();
 if(targetReached==1)
 {
 //		cout << "Hello" << endl;
-		if(cubeHoleSliderVar<=5)
+		if(cubeHoleSliderVar<4)
 		{
 			glm::mat4 down_trans=glm::translate(glm::vec3(0,-cubeHoleSliderVar,0));
 			cubeObjects["cube"].mvp=VP*down_trans*cubeObjects["cube"].model;
 			glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&cubeObjects["cube"].mvp[0][0]);
 			draw3DObject(rectangle);
 	//		draw3DObject(rectangleLines);
-			cubeHoleSliderVar=cubeHoleSliderVar+0.1;
+			cubeHoleSliderVar=cubeHoleSliderVar+0.2;
 		}
 		status=0;
-		if(cubeHoleSliderVar>=5)
+		if(cubeHoleSliderVar>=4)
 		{
 			glfwTerminate();
 			exit(EXIT_SUCCESS);
