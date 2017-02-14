@@ -50,7 +50,10 @@ glm::vec3 rect_pos, floor_pos;
 float rectangle_rotation = 0;
 VAO *bridgeTilesLines,*tilesLines, *rectangleLines, *tiles, *waterHole,*bridgeSwitch, *bridgeTiles;
 int targetReached=0, bridgeSwitchPressed=0;
-
+int top_view=0, block_view=0, follower_view=0, default_view=1;
+int rowArrayCounterA=10, colArrayCounterA=11, rowArrayCounterB=11, colArrayCounterB=11;
+int xa=0, ya=0, za=0, xb=0, yb=0, zb=0, xc=0, yc=0, zc=0;
+int fallStatus=0;
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
 
@@ -296,6 +299,34 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 		case 's':
 			turn_backward=1;
 			break;
+		case 't':
+			top_view=1;
+			default_view=0;
+			follower_view=0;
+			block_view=0;
+			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
+			break;
+		case 'b':
+			block_view=1;
+			top_view=0;
+			follower_view=0;
+			default_view=0;
+			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
+			break;
+		case 'v':
+			default_view=1;
+			top_view=0;
+			follower_view=0;
+			block_view=0;
+			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
+			break;
+		case 'f':
+			follower_view=1;
+			top_view=0;
+			block_view=0;
+			default_view=0;
+			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
+			break;
 		default:
 			break;
 	}
@@ -324,7 +355,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	glfwGetFramebufferSize(window, &fbwidth, &fbheight);
 	//	glViewport((int)(x*fbwidth), (int)(y*fbheight), (int)(w*fbwidth), (int)(h*fbheight));
 
-	GLfloat fov = (3*M_PI)/4.0f;
+	GLfloat fov = 110*(M_PI)/180.0f;
 
 	// sets the viewport of openGL renderer
 	glViewport (0, 0, (GLsizei) fbwidth, (GLsizei) fbheight);
@@ -1112,7 +1143,7 @@ void checkSpecialConditions()
 {
 	if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].x1== 2.5 && cubeObjects["cube"].x4==2.5 && cubeObjects["cube"].x5==2.5
 	 && cubeObjects["cube"].x8==2.5 && cubeObjects["cube"].x2==3.5 && cubeObjects["cube"].x3==3.5 && cubeObjects["cube"].x6==3.5 && cubeObjects["cube"].x7==3.5)
-	 	targetReached=1; // when you achieve the goal, you return 1;
+	 	{targetReached=1; return;} // when you achieve the goal, you return 1;
 	if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].z1==-1 && cubeObjects["cube"].z2==-1 && cubeObjects["cube"].z3==-1
 	   && cubeObjects["cube"].z4==-1 && cubeObjects["cube"].z5==-2 && cubeObjects["cube"].z6==-2 && cubeObjects["cube"].z7==-2
 		 && cubeObjects["cube"].z8==-2 && cubeObjects["cube"].x1==1.5 && cubeObjects["cube"].x4==1.5 && cubeObjects["cube"].x5==1.5 && cubeObjects["cube"].x8==1.5
@@ -1120,8 +1151,50 @@ void checkSpecialConditions()
 		{
 			//cout << "switch detected" << endl;
 			 bridgeSwitchPressed=1;
-			 createBridgeSwitch(); // when the bridgeSwitch gets pressed
+			 createBridgeSwitch(); // when the bridgeSwitch gets pressed, so switch changes colour from dark blue to light blue.
 		 }
+	if(cubeObjects["cube"].orientation=="alongZ")
+	{
+		rowArrayCounterA=cubeObjects["cube"].z1+10-1;
+		rowArrayCounterB=cubeObjects["cube"].z5+11-1;
+		colArrayCounterB=cubeObjects["cube"].x2+11-1;
+		colArrayCounterA=colArrayCounterB;
+		//cout << rowArrayCounterA <<" " << colArrayCounterA << " " << rowArrayCounterB << " " << colArrayCounterB << endl;
+		//cout <<arr[rowArrayCounterA][colArrayCounterA] << " " << arr[rowArrayCounterB][colArrayCounterB] << endl;
+		if(arr[rowArrayCounterA][colArrayCounterA]*arr[rowArrayCounterB][colArrayCounterB]==0 || ((arr[rowArrayCounterA][colArrayCounterA]*arr[rowArrayCounterB][colArrayCounterB]==4
+		|| arr[rowArrayCounterA][colArrayCounterA]*arr[rowArrayCounterB][colArrayCounterB]==16) && bridgeSwitchPressed==0) )
+			{
+				fallStatus=1;
+			//	glfwTerminate();
+			//	exit(EXIT_SUCCESS);
+			}
+		}
+		else if(cubeObjects["cube"].orientation=="alongY")
+		{
+			rowArrayCounterA=cubeObjects["cube"].z1+10-1;
+			colArrayCounterA=cubeObjects["cube"].x2+11-1;
+			if(arr[rowArrayCounterA][colArrayCounterA]==0 || (arr[rowArrayCounterA][colArrayCounterA]==4 && bridgeSwitchPressed==0))
+			{
+				fallStatus=1;
+				//glfwTerminate();
+				//exit(EXIT_SUCCESS);
+			}
+		}
+		else if(cubeObjects["cube"].orientation=="alongX")
+		{
+			rowArrayCounterA=cubeObjects["cube"].z1+10-1;
+			rowArrayCounterB=rowArrayCounterA;
+			colArrayCounterA=cubeObjects["cube"].x1+12-1;
+			colArrayCounterB=cubeObjects["cube"].x2+11-1;
+			if(arr[rowArrayCounterA][colArrayCounterA]*arr[rowArrayCounterB][colArrayCounterB]==0 || ((arr[rowArrayCounterA][colArrayCounterA]*arr[rowArrayCounterB][colArrayCounterB]==4
+			|| arr[rowArrayCounterA][colArrayCounterA]*arr[rowArrayCounterB][colArrayCounterB]==16) && bridgeSwitchPressed==0))
+			{
+				fallStatus=1;
+//				glfwTerminate();
+	//			exit(EXIT_SUCCESS);
+			}
+		}
+
 }
 float camera_rotation_angle = 90;
 int status=1;
@@ -1134,6 +1207,7 @@ void draw (GLFWwindow* window)
 
 
 	int i=0, j=0;
+	glm::vec3 up, eye, target;
 	// use the loaded shader program
 	// Don't change unless you know what you are doing
 	glUseProgram(programID);
@@ -1141,14 +1215,52 @@ void draw (GLFWwindow* window)
 	// Eye - Location of camera. Don't change unless you are sure!!
 
 //	glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
+	if(top_view==1)
+  {
 
-  glm::vec3 eye(0,3,0);
+		if(ya<8)
+		 ya=ya+1;
+		if(zc>-1)
+			zc-=1;
+		glm::vec3 eye(xa,ya,za);
+		glm::vec3 target(xb,yb,zb);
+		glm::vec3 up(xc,yc,zc);
+
+	//	glm::vec3 eye(0,8,0);
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
-	glm::vec3 target (0, 0, 0);
+//	glm::vec3 target (0, 0, 0);
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-	glm::vec3 up (0,0,-1);
-
+	//glm::vec3 up (0,0,-1);
 	Matrices.view=glm::lookAt(eye,target,up);
+
+	}
+	else if(block_view==1)
+	{
+
+	}
+	else if(default_view==1)
+	{
+		if(xa<3)
+		xa+=1;
+		if(ya<5)
+		ya+=1;
+		if(za<2)
+		za+=1;
+		if(yc<1)
+		yc+=1;
+		glm::vec3 eye(xa,ya,za);
+		glm::vec3 target(xb,yb,zb);
+		glm::vec3 up(xc,yc,zc);
+		//glm::vec3 eye(3,5,3);
+		//glm::vec3 target(0,0,0);
+		//glm::vec3 up(0,1,0);
+		Matrices.view=glm::lookAt(eye,target,up);
+	}
+	else if(follower_view==1)
+	{
+
+	}
+
 //	Matrices.view=glm::mat4(1.0f);
 	glm::mat4 VP=Matrices.projection*Matrices.view;
 	glm::mat4 scaleCube=glm::scale(glm::vec3(1,1,1));
@@ -1186,7 +1298,7 @@ void draw (GLFWwindow* window)
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x2,cubeObjects["cube"].y2,cubeObjects["cube"].z2));
 	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
-	rot_varRight=rot_varRight-1;
+	rot_varRight=rot_varRight-3;
 	}
 	if(rot_varRight<-90)
 			{
@@ -1251,6 +1363,7 @@ if(turn_left==1 && rot_varLeft<=90) // when player presses 'a'
 	}
 	else if(cubeObjects["cube"].orientation=="alongY")
 	{
+
 			prerotation=glm::rotate((float)(M_PI/2.0),glm::vec3(1,0,0));
 			glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,-1));
 			prerotation=aBitTrans*prerotation;
@@ -1258,6 +1371,7 @@ if(turn_left==1 && rot_varLeft<=90) // when player presses 'a'
 	}
 	else if(cubeObjects["cube"].orientation=="alongX")
 	{
+
 		prerotation=glm::rotate((float)(-M_PI/2.0),glm::vec3(0,1,0));
 		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,-1));
 		prerotation=aBitTrans*prerotation;
@@ -1269,7 +1383,7 @@ if(turn_left==1 && rot_varLeft<=90) // when player presses 'a'
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x1,cubeObjects["cube"].y1,cubeObjects["cube"].z1));
 	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
-	rot_varLeft=rot_varLeft+1;
+	rot_varLeft=rot_varLeft+3;
 }
 if(rot_varLeft>90)
 		{
@@ -1327,6 +1441,7 @@ if(turn_forward==1 && rot_varForward>-90)
 {
 	if(cubeObjects["cube"].orientation=="alongX")
 	{
+
 		prerotation=glm::rotate((float)(M_PI/2.0),glm::vec3(0,1,0));
 		glm::mat4 aBitTrans=glm::translate(glm::vec3(-2,0,0));
 		prerotation=aBitTrans*prerotation;
@@ -1334,6 +1449,7 @@ if(turn_forward==1 && rot_varForward>-90)
 	}
 	else if(cubeObjects["cube"].orientation=="alongY")
 	{
+
 		prerotation=glm::rotate((float)(-M_PI/2.0),glm::vec3(1,0,0));
 		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,1));
 		prerotation=aBitTrans*prerotation;
@@ -1341,6 +1457,7 @@ if(turn_forward==1 && rot_varForward>-90)
 	}
 	else if(cubeObjects["cube"].orientation=="alongZ")
 	{
+
 		prerotation=glm::rotate((float)(0),glm::vec3(1,0,0));
 //		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,1));
 	//	prerotation=aBitTrans*prerotation;
@@ -1352,7 +1469,7 @@ if(turn_forward==1 && rot_varForward>-90)
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x6,cubeObjects["cube"].y6,cubeObjects["cube"].z6));
 	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
-	rot_varForward=rot_varForward-1;
+	rot_varForward=rot_varForward-3;
 }
 //cout << YZplaneAngle << endl;
 
@@ -1377,7 +1494,6 @@ if(rot_varForward<=-90)
 	}
 	else if(cubeObjects["cube"].orientation=="alongY")
 	{
-	//	cout << "sdfsdfjggsa" << endl;
 		cubeObjects["cube"].orientation="alongZ";//orientation will change accordingly depending upon the previous iteration
 	//	cout << "Current cube orientation " << cubeObjects["cube"].orientation << endl;
 		cubeObjects["cube"].y3+=-1;
@@ -1415,8 +1531,10 @@ if(rot_varForward<=-90)
 /*#################################################################################################*/
 if(turn_backward==1 && rot_varBackward<90)
 {
+
 	if(cubeObjects["cube"].orientation=="alongX")
 	{
+
 		prerotation=glm::rotate((float)(-M_PI/2.0),glm::vec3(0,1,0));
 		glm::mat4 aBitTrans=glm::translate(glm::vec3(-2,0,0));
 		prerotation=aBitTrans*prerotation;
@@ -1424,6 +1542,7 @@ if(turn_backward==1 && rot_varBackward<90)
 	}
 	else if(cubeObjects["cube"].orientation=="alongY")
 	{
+
 		prerotation=glm::rotate((float)(M_PI/2.0),glm::vec3(1,0,0));
 		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,-1));
 		prerotation=aBitTrans*prerotation;
@@ -1431,6 +1550,7 @@ if(turn_backward==1 && rot_varBackward<90)
 	}
 	else if(cubeObjects["cube"].orientation=="alongZ")
 	{
+
 		prerotation=glm::rotate((float)(0),glm::vec3(1,0,0));
 //		glm::mat4 aBitTrans=glm::translate(glm::vec3(0,0,1));
 	//	prerotation=aBitTrans*prerotation;
@@ -1442,7 +1562,7 @@ if(turn_backward==1 && rot_varBackward<90)
 	glm::mat4 inverse_trans_mat=glm::translate(glm::vec3(cubeObjects["cube"].x2,cubeObjects["cube"].y2,cubeObjects["cube"].z2));
 	cubeObjects["cube"].model*=inverse_trans_mat*rotateCube*prerotation*trans_mat;
 	cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
-	rot_varBackward=rot_varBackward+1;
+	rot_varBackward=rot_varBackward+3;
 }
 if(rot_varBackward>=90)
 {
@@ -1514,6 +1634,8 @@ if(turn_right!=1 && turn_left!=1 && turn_forward!=1 && turn_backward!=1 && statu
 			else if(cubeObjects["cube"].orientation=="alongX")
 				finalRoatationMat=glm::rotate(float(-M_PI/2.0),glm::vec3(0,1,0));
 
+			
+
 			cubeObjects["cube"].model*=trans_mat*finalRoatationMat*scaleCube;
 			cubeObjects["cube"].mvp=VP*cubeObjects["cube"].model;
 }
@@ -1548,6 +1670,7 @@ for(i=0;i<21;i++)
 	{
 			glm::mat4 mvpsmall=glm::mat4(1.0f);
 			trans_tile=glm::translate(glm::vec3(j-10,-0.75,i-10+0.5));
+
 			mvpsmall=VP*trans_tile;
 			glUniformMatrix4fv(Matrices.MatrixID,1,GL_FALSE,&mvpsmall[0][0]);
 			if(arr[i][j]==1)
@@ -1566,6 +1689,9 @@ for(i=0;i<21;i++)
 				}
 	}
 }
+
+//cout <<"rowArrayCounterB " << rowArrayCounterB << " colArrayCounterB " << colArrayCounterB << endl;
+
 
  //draw the final cube. Camera matrix (view)
 	/*  if(doV)
@@ -1710,7 +1836,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	reshapeWindow (window, width, height);
 
 	// Background color of the scene
-	glClearColor (0.3f, 0.3f, 0.3f, 0.0f); // R, G, B, A
+	glClearColor (0.0f, 0.0f, 0.0f, 0.0f); // R, G, B, A
 	glClearDepth (1.0f);
 
 	glEnable (GL_DEPTH_TEST);
