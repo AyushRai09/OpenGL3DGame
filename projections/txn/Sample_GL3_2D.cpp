@@ -52,7 +52,7 @@ VAO *fragileTile, *bridgeTilesLines,*tilesLines, *rectangleLines, *tiles, *water
 int targetReached=0, bridgeSwitchPressed=0;
 int top_view=0, block_view=0, follower_view=0, default_view=1, helicopter_view=0;
 int rowArrayCounterA=10, colArrayCounterA=11, rowArrayCounterB=11, colArrayCounterB=11;
-int xa=0, ya=0, za=0, xb=0, yb=0, zb=0, xc=0, yc=0, zc=0;
+float xa=0, ya=0, za=0, xb=0, yb=0, zb=0, xc=0, yc=0, zc=0;
 int fallStatus=0,level=1;
 float downfall=0;
 /* Function to load Shaders - Use it as it is */
@@ -306,7 +306,7 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			follower_view=0;
 			block_view=0;
 			helicopter_view=0;
-			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
+			//xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
 			break;
 		case 'b':
 			block_view=1;
@@ -314,7 +314,7 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			follower_view=0;
 			default_view=0;
 			helicopter_view=0;
-			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
+			//xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
 			break;
 		case 'v':
 			default_view=1;
@@ -322,7 +322,7 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			follower_view=0;
 			helicopter_view=0;
 			block_view=0;
-			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
+		//	xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
 			break;
 		case 'f':
 			follower_view=1;
@@ -330,7 +330,7 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			block_view=0;
 			helicopter_view=0;
 			default_view=0;
-			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
+		//	xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
 			break;
 		case 'h':
 			follower_view=0;
@@ -1397,20 +1397,15 @@ void draw (GLFWwindow* window)
 //	glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 0, 5*sin(camera_rotation_angle*M_PI/180.0f) );
 	if(top_view==1)
   {
+		//glm::vec3 eye(xa,ya,za);
+		//glm::vec3 target(xb,yb,zb);
+		//glm::vec3 up(xc,yc,zc);
 
-		if(ya<8)
-		 ya=ya+1;
-		if(zc>-1)
-			zc-=1;
-		glm::vec3 eye(xa,ya,za);
-		glm::vec3 target(xb,yb,zb);
-		glm::vec3 up(xc,yc,zc);
-
-	//	glm::vec3 eye(0,8,0);
+		glm::vec3 eye(0,8,0);
 	// Target - Where is the camera looking at.  Don't change unless you are sure!!
-//	glm::vec3 target (0, 0, 0);
+	glm::vec3 target (0, 0, 0);
 	// Up - Up vector defines tilt of camera.  Don't change unless you are sure!!
-	//glm::vec3 up (0,0,-1);
+	glm::vec3 up (0,0,-1);
 	Matrices.view=glm::lookAt(eye,target,up);
 	}
 	else if(block_view==1)
@@ -1422,20 +1417,12 @@ void draw (GLFWwindow* window)
 	}
 	else if(default_view==1)
 	{
-		if(xa<3)
-		xa+=1;
-		if(ya<5)
-		ya+=1;
-		if(za<2)
-		za+=1;
-		if(yc<1)
-		yc+=1;
-		glm::vec3 eye(xa,ya,za);
-		glm::vec3 target(xb,yb,zb);
-		glm::vec3 up(xc,yc,zc);
-		//glm::vec3 eye(3,5,3);
-		//glm::vec3 target(0,0,0);
-		//glm::vec3 up(0,1,0);
+		//glm::vec3 eye(xa,ya,za);
+		//glm::vec3 target(xb,yb,zb);
+		//glm::vec3 up(xc,yc,zc);
+		glm::vec3 eye(3,5,3);
+		glm::vec3 target(0,0,0);
+		glm::vec3 up(0,1,0);
 		Matrices.view=glm::lookAt(eye,target,up);
 	}
 	else if(follower_view==1)
