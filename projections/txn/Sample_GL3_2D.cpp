@@ -48,12 +48,12 @@ GLuint programID;
 double last_update_time, current_time;
 glm::vec3 rect_pos, floor_pos;
 float rectangle_rotation = 0;
-VAO *bridgeTilesLines,*tilesLines, *rectangleLines, *tiles, *waterHole,*bridgeSwitch, *bridgeTiles;
+VAO *fragileTile, *bridgeTilesLines,*tilesLines, *rectangleLines, *tiles, *waterHole,*bridgeSwitch, *bridgeTiles;
 int targetReached=0, bridgeSwitchPressed=0;
-int top_view=0, block_view=0, follower_view=0, default_view=1;
+int top_view=0, block_view=0, follower_view=0, default_view=1, helicopter_view=0;
 int rowArrayCounterA=10, colArrayCounterA=11, rowArrayCounterB=11, colArrayCounterB=11;
 int xa=0, ya=0, za=0, xb=0, yb=0, zb=0, xc=0, yc=0, zc=0;
-int fallStatus=0,level=2;
+int fallStatus=0,level=1;
 float downfall=0;
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
@@ -305,6 +305,7 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			default_view=0;
 			follower_view=0;
 			block_view=0;
+			helicopter_view=0;
 			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
 			break;
 		case 'b':
@@ -312,12 +313,14 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			top_view=0;
 			follower_view=0;
 			default_view=0;
+			helicopter_view=0;
 			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
 			break;
 		case 'v':
 			default_view=1;
 			top_view=0;
 			follower_view=0;
+			helicopter_view=0;
 			block_view=0;
 			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
 			break;
@@ -325,8 +328,18 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			follower_view=1;
 			top_view=0;
 			block_view=0;
+			helicopter_view=0;
 			default_view=0;
 			xa=0;ya=0;za=0;xb=0;yb=0;zb=0;xc=0;yc=0;zc=0;
+			break;
+		case 'h':
+			follower_view=0;
+			top_view=0;
+			block_view=0;
+			default_view=0;
+			helicopter_view=1;
+		case ' ':
+			do_rot^=1;
 			break;
 		default:
 			break;
@@ -388,11 +401,11 @@ int arr[21][21]={
 {0,0,0,0,0,0,0,0,0,0, 1, 1,1,1,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 4, 4,4,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 4, 4,4,0,0,0,0,0,0,0,0},
-{0,0,0,0,0,0,0,0,0,1, 1, 1,3,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,1, 5, 1,3,0,0,0,0,0,0,0,0},
 
-{0,0,0,0,0,0,0,0,0,1, 1, 1,1,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,1, 5, 1,1,0,0,0,0,0,0,0,0},
 
-{0,0,0,0,0,0,0,0,0,1, 1, 1,0,0,0,0,0,0,0,0,0},
+{0,0,0,0,0,0,0,0,0,1, 5, 1,0,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,1, 1, 1,0,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
 {0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
@@ -418,9 +431,9 @@ void arr_init()
 	{0,0,0,0,0,0,0,0,0,0, 0, 0,4,0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0,3,0, 1, 1,1,0,0,0,0,0,0,0,0},
 
-	{0,0,0,0,0,0,0,0,1,0, 1, 1,1,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,1,0, 5, 1,1,0,0,0,0,0,0,0,0},
 
-	{0,0,0,0,0,0,0,0,1,0, 1, 1,1,0,0,0,0,0,0,0,0},
+	{0,0,0,0,0,0,0,0,1,0, 5, 1,1,0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0,1,1, 1, 1,1,0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
 	{0,0,0,0,0,0,0,0,0,0, 0, 0,0,0,0,0,0,0,0,0,0},
@@ -1178,6 +1191,88 @@ void createBridgeTilesLines()
 	};
 	bridgeTilesLines=create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_LINE);
 }
+void createFragileTile()
+{
+	GLfloat vertex_buffer_data [] = {
+		-0.5, 0.25, 0.5,
+		-0.5, -0.25,0.5,
+		0.5, -0.25, 0.5,
+		-0.5, 0.25, 0.5,
+		0.5, -0.25, 0.5,
+		0.5, 0.25, 0.5,
+		0.5, 0.25, 0.5,
+		0.5, -0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, 0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, 0.25, -0.5,
+		0.5, 0.25, -0.5,
+		0.5, -0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		0.5, 0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, -0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, 0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		-0.5, 0.25, 0.5,
+		0.5, 0.25, 0.5,
+		-0.5, 0.25, -0.5,
+		0.5, 0.25, 0.5,
+		0.5, 0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		-0.5, -0.25, -0.5,
+		0.5, -0.25, -0.5,
+		-0.5, -0.25, 0.5,
+		0.5, -0.25, -0.5,
+		0.5, -0.25, 0.5,
+	};
+
+	GLfloat color_buffer_data [] = {
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+		241/255.0,245/255.0,11/255.0,
+	};
+
+	fragileTile=create3DObject(GL_TRIANGLES, 36, vertex_buffer_data, color_buffer_data, GL_FILL);
+}
 
 void checkSpecialConditions()
 {
@@ -1196,13 +1291,26 @@ void checkSpecialConditions()
 			 bridgeSwitchPressed=1;
 			 createBridgeSwitch(); // when the bridgeSwitch gets pressed, so switch changes colour from dark blue to light blue.
 		 }
-	 }
+		 if((cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].z1==1 && cubeObjects["cube"].z2==1 && cubeObjects["cube"].x1==-0.5 &&
+	 	cubeObjects["cube"].x2==0.5) || (cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].z1==0 && cubeObjects["cube"].z2==0 && cubeObjects["cube"].x1==-0.5 &&
+	 	cubeObjects["cube"].x2==0.5) || (cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].z1==-1 && cubeObjects["cube"].z2==-1 && cubeObjects["cube"].x1==-0.5 &&
+	 	cubeObjects["cube"].x2==0.5))
+	 	{
+	 	//	cout << "helloaw" << endl;
+	 		arr[10][10]=0;arr[9][10]=0;arr[8][10]=0;
+	 		fallStatus=1;
+	 	}
+	}
 	 else if(level==2)
 	 {
-		 if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].x1== 2.5 && cubeObjects["cube"].x4==2.5 && cubeObjects["cube"].x5==2.5
-	 	 && cubeObjects["cube"].x8==2.5 && cubeObjects["cube"].x2==3.5 && cubeObjects["cube"].x3==3.5 && cubeObjects["cube"].x6==3.5 && cubeObjects["cube"].x7==3.5
-	   && cubeObjects["cube"].z1==-6)
-	 	 	{targetReached=1; return;}
+		 if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].x1== 0.5 && cubeObjects["cube"].x4==0.5 && cubeObjects["cube"].x5==0.5
+	 	 && cubeObjects["cube"].x8==0.5 && cubeObjects["cube"].x2==1.5 && cubeObjects["cube"].x3==1.5 && cubeObjects["cube"].x6==1.5 && cubeObjects["cube"].x7==1.5
+	   && cubeObjects["cube"].z1==-7)
+	 	 	{
+				targetReached=1;
+			//	cout << "hellowe" << endl;
+				 return;
+			}
 
 			if(cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].z1==-1 && cubeObjects["cube"].z2==-1 && cubeObjects["cube"].z3==-1
 			   && cubeObjects["cube"].z4==-1 && cubeObjects["cube"].z5==-2 && cubeObjects["cube"].z6==-2 && cubeObjects["cube"].z7==-2
@@ -1213,6 +1321,14 @@ void checkSpecialConditions()
 		 			 bridgeSwitchPressed=1;
 		 			 createBridgeSwitch(); // when the bridgeSwitch gets pressed, so switch changes colour from dark blue to light blue.
 		 		 }
+			if((cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].z1==1 && cubeObjects["cube"].z2==1 && cubeObjects["cube"].x1==-0.5 &&
+			cubeObjects["cube"].x2==0.5) || (cubeObjects["cube"].orientation=="alongY" && cubeObjects["cube"].z1==0 && cubeObjects["cube"].z2==0 && cubeObjects["cube"].x1==-0.5 &&
+			cubeObjects["cube"].x2==0.5))
+			{
+			//	cout << "helloaw" << endl;
+				arr[10][10]=0;arr[9][10]=0;
+				fallStatus=1;
+			}
 	 }
 	if(cubeObjects["cube"].orientation=="alongZ")
 	{
@@ -1269,6 +1385,9 @@ void draw (GLFWwindow* window)
 
 	int i=0, j=0;
 	glm::vec3 up, eye, target;
+//	int fbwidth, fbheight;
+//	glfwGetFramebufferSize(window, &fbwidth, &fbheight);
+	//glViewport((int)(x*fbwidth), (int)(y*fbheight), (int)(w*fbwidth), (int)(h*fbheight));
 	// use the loaded shader program
 	// Don't change unless you know what you are doing
 	glUseProgram(programID);
@@ -1325,6 +1444,13 @@ void draw (GLFWwindow* window)
 		glm::vec3 target(cubeObjects["cube"].x2,0,cubeObjects["cube"].z5-5);
 		glm::vec3 up(0,1,0);
 		Matrices.view=glm::lookAt(eye,target,up);
+	}
+	else if(helicopter_view==1)
+	{
+		glm::vec3 eye ( 5*cos(camera_rotation_angle*M_PI/180.0f), 4, 5*sin(camera_rotation_angle*M_PI/180.0f) );
+		glm::vec3 target (0, 0, 0);
+		glm::vec3 up (0, 1, 0);
+		Matrices.view=glm::lookAt(eye,target, up);
 	}
 
 //	Matrices.view=glm::mat4(1.0f);
@@ -1740,6 +1866,7 @@ if(targetReached==1)
 			level=2; //increase the level
 			bridgeSwitchPressed=0; // reset the bridgeSwitchPressed;
 			status=1;
+			createBridgeSwitch();//has to again reset the colour of the switch from light blue to dark blue.
 			cubeObjects["cube"].x1=-0.5; // initalizing each and every corner of the cube(8 vertices);
 			cubeObjects["cube"].x2=0.5;
 			cubeObjects["cube"].x3=0.5;
@@ -1794,8 +1921,13 @@ for(i=0;i<21;i++)
 					draw3DObject(bridgeTiles);
 					draw3DObject(bridgeTilesLines);
 				}
+			if(arr[i][j]==5)
+			{
+				draw3DObject(fragileTile);
+			}
 	}
 }
+//int fbwidth=600, fbheight=600;
 
 //cout <<"rowArrayCounterB " << rowArrayCounterB << " colArrayCounterB " << colArrayCounterB << endl;
 
@@ -1905,6 +2037,7 @@ void initGL (GLFWwindow* window, int width, int height)
 	createBridgeSwitch();
 	createBridgeTiles();
 	createBridgeTilesLines();
+	createFragileTile();
 	cubeObjects["cube"].x1=-0.5; // initalizing each and every corner of the cube(8 vertices);
 	cubeObjects["cube"].x2=0.5;
 	cubeObjects["cube"].x3=0.5;
@@ -1979,11 +2112,11 @@ int main (int argc, char** argv)
 		draw(window);
 		// OpenGL Draw commands
 			current_time = glfwGetTime();
-	//		if(do_rot)
-	//		camera_rotation_angle += 90*(current_time - last_update_time); // Simulating camera rotation
-	//		if(camera_rotation_angle > 720)
-	//		camera_rotation_angle -= 720;
-	//		last_update_time = current_time;
+			if(do_rot)
+				camera_rotation_angle += 90*(current_time - last_update_time); // Simulating camera rotation
+			if(camera_rotation_angle > 720)
+				camera_rotation_angle -= 720;
+			last_update_time = current_time;
 /*			draw(window, 0, 0, 0.5, 0.5, 1, 1, 1);
 			draw(window, 0.5, 0, 0.5, 0.5, 0, 1, 1);
 			draw(window, 0, 0.5, 0.5, 0.5, 1, 0, 1);
