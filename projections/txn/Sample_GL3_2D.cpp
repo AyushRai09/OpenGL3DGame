@@ -7,6 +7,9 @@
 #include <GL/glew.h>
 #include <GL/gl.h>
 #include <GLFW/glfw3.h>
+#include <ao/ao.h>
+#include <mpg123.h>
+#define BITS 8
 
 #define GLM_FORCE_RADIANS
 #include <glm/glm.hpp>
@@ -39,6 +42,110 @@ struct Sprite {
 		string orientation;
 		glm::mat4 mvp,model,mvpf;
 };
+mpg123_handle *mh;
+unsigned char *buffer;
+size_t buffer_size;
+size_t done;
+int err;
+
+int driver;
+ao_device *dev;
+
+ao_sample_format format;
+int channels, encoding;
+long rate;
+
+void audio_init() {
+    /* initializations */
+    ao_initialize();
+    driver = ao_default_driver_id();
+    mpg123_init();
+    mh = mpg123_new(NULL, &err);
+    buffer_size= 3000;
+    buffer = (unsigned char*) malloc(buffer_size * sizeof(unsigned char));
+
+    /* open the file and get the decoding format */
+    mpg123_open(mh, "./breakout.mp3");
+    mpg123_getformat(mh, &rate, &channels, &encoding);
+
+    /* set the output format and open the output device */
+    format.bits = mpg123_encsize(encoding) * BITS;
+    format.rate = rate;
+    format.channels = channels;
+    format.byte_format = AO_FMT_NATIVE;
+    format.matrix = 0;
+    dev = ao_open_live(driver, &format, NULL);
+}
+
+void audio_play() {
+    /* decode and play */
+    if (mpg123_read(mh, buffer, buffer_size, &done) == MPG123_OK)
+        ao_play(dev, (char*) buffer, done);
+    else mpg123_seek(mh, 0, SEEK_SET);
+}
+
+void audio_close() {
+    /* clean up */
+    free(buffer);
+    ao_close(dev);
+    mpg123_close(mh);
+    mpg123_delete(mh);
+    mpg123_exit();
+    ao_shutdown();
+}
+
+
+mpg123_handle *mh1;
+unsigned char *buffer1;
+size_t buffer_size1;
+size_t done1;
+int err1;
+
+int driver1;
+ao_device *dev1;
+
+ao_sample_format format1;
+int channels1, encoding1;
+long rate1;
+
+void audio1_init() {
+    /* initializations */
+    ao_initialize();
+    driver1 = ao_default_driver_id();
+    mpg123_init();
+    mh1 = mpg123_new(NULL, &err1);
+    buffer_size1= 3000;
+    buffer1 = (unsigned char*) malloc(buffer_size1 * sizeof(unsigned char));
+
+    /* open the file and get the decoding format */
+	    mpg123_open(mh1,"./sound.mp3");
+    mpg123_getformat(mh1, &rate1, &channels1, &encoding1);
+
+    /* set the output format and open the output device */
+    format1.bits = mpg123_encsize(encoding1) * BITS;
+    format1.rate = rate1;
+    format1.channels = channels1;
+    format1.byte_format = AO_FMT_NATIVE;
+    format1.matrix = 0;
+    dev1 = ao_open_live(driver1, &format1, NULL);
+}
+
+void audio1_play() {
+    /* decode and play */
+    if (mpg123_read(mh1, buffer1, buffer_size1, &done1) == MPG123_OK)
+        ao_play(dev1, (char*) buffer1, done1);
+    else mpg123_seek(mh1, 0, SEEK_SET);
+}
+
+void audio1_close() {
+    /* clean up */
+    free(buffer1);
+    ao_close(dev1);
+    mpg123_close(mh1);
+    mpg123_delete(mh1);
+    mpg123_exit();
+    ao_shutdown();
+}
 map <string, Sprite> cubeObjects;
 int do_rot, floor_rel,turn_left=0,turn_right=0, turn_forward=0, turn_backward=0;
 int key_press=0, rot_varLeft=0, rot_varRight=0, rot_varForward=0, rot_varBackward=0;
@@ -55,6 +162,11 @@ int rowArrayCounterA=10, colArrayCounterA=11, rowArrayCounterB=11, colArrayCount
 float xa=0, ya=0, za=0, xb=0, yb=0, zb=0, xc=0, yc=0, zc=0;
 int fallStatus=0,level=1;
 float downfall=0;
+int jump_flag=0;
+float dx=0, dy=0, dz=0;
+int noOfMoves=0;
+int chanceFlag=1;
+float camera_fov=1.8;
 /* Function to load Shaders - Use it as it is */
 GLuint LoadShaders(const char * vertex_file_path,const char * fragment_file_path) {
 
@@ -290,15 +402,26 @@ void keyboardChar (GLFWwindow* window, unsigned int key)
 			break;
 		case 'a':
 			turn_left=1;
+			noOfMoves++;
+			audio1_init();
 			break;
 		case 'd':
 			turn_right=1;
+			noOfMoves++;
+			audio1_init();
 			break;
 		case 'w':
 			turn_forward=1;
+			noOfMoves++;
+			audio1_init();
 			break;
 		case 's':
 			turn_backward=1;
+			noOfMoves++;
+			audio1_init();
+			break;
+		case 'j':
+			jump_flag=1;
 			break;
 		case 't':
 			top_view=1;
@@ -369,7 +492,7 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	glfwGetFramebufferSize(window, &fbwidth, &fbheight);
 	//	glViewport((int)(x*fbwidth), (int)(y*fbheight), (int)(w*fbwidth), (int)(h*fbheight));
 
-	GLfloat fov = 110*(M_PI)/180.0f;
+	GLfloat fov = camera_fov;//110*(M_PI)/180.0f;
 
 	// sets the viewport of openGL renderer
 	glViewport (0, 0, (GLsizei) fbwidth, (GLsizei) fbheight);
@@ -381,6 +504,23 @@ void reshapeWindow (GLFWwindow* window, int width, int height)
 	// Ortho projection for 2D views
 	//	Matrices.projection = glm::ortho(-4.0f, 4.0f, -4.0f, 4.0f, 0.1f, 500.0f);
 }
+void mousescroll(GLFWwindow* window, double xoffset, double yoffset)
+{
+    if (yoffset==-1) {
+        camera_fov*=1.1;
+    }
+    else if(yoffset==1){
+        camera_fov/=1.1; //make it bigger than current size
+    }
+    if(camera_fov>=2){
+    	camera_fov=2;
+    }
+    if(camera_fov<=0.5){
+    	camera_fov=0.5;
+    }
+    reshapeWindow(window,700,1400);
+}
+
 
 //1 is for the normal bricks
 //2 is for the target water hole
@@ -1443,12 +1583,12 @@ void draw (GLFWwindow* window)
 //	Matrices.view=glm::mat4(1.0f);
 	glm::mat4 VP=Matrices.projection*Matrices.view;
 	glm::mat4 scaleCube=glm::scale(glm::vec3(1,1,1));
-	glm::mat4 trans_mat,trans_tile,rotateCube,prerotation;
+	glm::mat4 trans_mat,trans_tile,rotateCube,prerotation, trans_mat2;
 /*############################################################################################################*/
 //XYplaneAngle for turn_right and turn_left, YZplaneAngle for turn_forward and turn_backward.
 	if(turn_right==1 && rot_varRight>=-90) //do this for the case when player presses the key 'd'
 	{
-
+		//chanceFlag=0;
 		//rot_varRight=1;
 		if(cubeObjects["cube"].orientation=="alongZ")
 			{
@@ -1481,6 +1621,7 @@ void draw (GLFWwindow* window)
 	}
 	if(rot_varRight<-90)
 			{
+				cout << "Total number of moves:" << noOfMoves << endl;
 				rot_varRight=0;
 				turn_right=0;
 
@@ -1532,7 +1673,7 @@ void draw (GLFWwindow* window)
 				}
 			}
 /*###############################################################################################*/
-if(turn_left==1 && rot_varLeft<=90) // when player presses 'a'
+if(turn_left==1 && rot_varLeft<=90 ) // when player presses 'a'
 {
 	//rot_varLeft=1;
 	if(cubeObjects["cube"].orientation=="alongZ")
@@ -1566,6 +1707,8 @@ if(turn_left==1 && rot_varLeft<=90) // when player presses 'a'
 }
 if(rot_varLeft>90)
 		{
+
+			cout << "Total number of moves:" << noOfMoves << endl;
 			rot_varLeft=0;
 			turn_left=0;
 
@@ -1612,7 +1755,6 @@ if(rot_varLeft>90)
 			 cubeObjects["cube"].y4+=-1;
 			 cubeObjects["cube"].y7+=-1;
 			 cubeObjects["cube"].y8+=-1;
-
 		 }
 		}
 
@@ -1655,7 +1797,7 @@ if(turn_forward==1 && rot_varForward>-90)
 if(rot_varForward<=-90)
 {
 	//cout << "Inside rot_varForward < -90 condition " << endl;
-
+	cout << "Total number of moves:" << noOfMoves << endl;
 	turn_forward=0;
 	rot_varForward=0;
 
@@ -1704,13 +1846,11 @@ if(rot_varForward<=-90)
 		cubeObjects["cube"].y7+=1.0;
 		cubeObjects["cube"].y8+=1.0;
 	}
-
 }
 //cout << cubeObjects["cube"].z6 << endl;
 /*#################################################################################################*/
 if(turn_backward==1 && rot_varBackward<90)
 {
-
 	if(cubeObjects["cube"].orientation=="alongX")
 	{
 
@@ -1746,6 +1886,7 @@ if(turn_backward==1 && rot_varBackward<90)
 if(rot_varBackward>=90)
 {
 		rot_varBackward=0;
+		cout << "Total number of moves:" << noOfMoves << endl;
 		turn_backward=0;
 		if(cubeObjects["cube"].orientation=="alongX")
 		{
@@ -1797,7 +1938,7 @@ if(rot_varBackward>=90)
 
 glm::mat4 finalRoatationMat;
 //Finally draw whaterver object you got
-if(turn_right!=1 && turn_left!=1 && turn_forward!=1 && turn_backward!=1 && status==1)
+if(turn_right!=1 && turn_left!=1 && turn_forward!=1 && turn_backward!=1 &&  jump_flag!=1 && status==1)
 {
 			reached_flag=0;
 			cubeObjects["cube"].model=glm::mat4(1.0f);
@@ -1853,6 +1994,7 @@ if(targetReached==1)
 			level=2; //increase the level
 			bridgeSwitchPressed=0; // reset the bridgeSwitchPressed;
 			status=1;
+			noOfMoves=0;
 			createBridgeSwitch();//has to again reset the colour of the switch from light blue to dark blue.
 			cubeObjects["cube"].x1=-0.5; // initalizing each and every corner of the cube(8 vertices);
 			cubeObjects["cube"].x2=0.5;
@@ -2006,6 +2148,7 @@ GLFWwindow* initGLFW (int width, int height){
 	glfwSetKeyCallback(window, keyboard);      // general keyboard input
 	glfwSetCharCallback(window, keyboardChar);  // simpler specific character handling
 	glfwSetMouseButtonCallback(window, mouseButton);  // mouse button clicks
+	glfwSetScrollCallback(window, mousescroll); // mouse scroll
 
 	return window;
 }
@@ -2087,7 +2230,7 @@ int main (int argc, char** argv)
 	GLFWwindow* window = initGLFW(width, height);
 	initGLEW();
 	initGL (window, width, height);
-
+	audio_init();
 
 	last_update_time = glfwGetTime();
 	/* Draw in loop */
@@ -2097,6 +2240,9 @@ int main (int argc, char** argv)
 		if(level==2)
 			arr_init();
 		draw(window);
+		audio_play();
+		if(turn_left==1 || turn_right==1 || turn_forward==1 || turn_backward==1)
+			audio1_play();
 		// OpenGL Draw commands
 			current_time = glfwGetTime();
 			if(do_rot)
